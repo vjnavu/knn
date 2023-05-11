@@ -1,0 +1,132 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="vn.gov.knn.admin.board.board.BoardMapper">
+    <resultMap id="BoardResultMap" type="vn.gov.knn.admin.board.board.Board">
+        <id column="BOARD_SEQ" property="board_seq"/>
+        <result column="BOARD_NAME" property="board_name"/>
+        <result column="BOARD_TYPE" property="board_type"/>
+        <result column="BOARD_PERM_WRITE" property="board_perm_write"/>
+        <result column="BOARD_PERM_VIEW_LIST" property="board_perm_view_list"/>
+        <result column="BOARD_PERM_VIEW_POST" property="board_perm_view_post"/>
+        <result column="BOARD_PERM_DELETE" property="board_perm_delete"/>
+        <result column="BOARD_FILES" property="board_files"/>
+        <result column="BOARD_DISPLAY" property="board_display"/>
+        <result column="BOARD_REG_ADM" property="board_reg_adm"/>
+        <result column="BOARD_REG_DT" property="board_reg_dt"/>
+        <result column="BOARD_MOD_ADM" property="board_mod_adm"/>
+        <result column="BOARD_MOD_DT" property="board_mod_dt"/>
+        <result column="BOARD_DELETE" property="board_delete"/>
+
+        <result column="board_reg_email" property="board_reg_email"/>
+        <result column="board_mod_email" property="board_mod_email"/>
+        <result column="number_board" property="number_board"/>
+    </resultMap>
+
+    <select id="getAllBoard" parameterType="vn.gov.knn.admin.board.board.Board" resultMap="BoardResultMap">
+        SELECT *
+        FROM TB_DSD_BOARD
+        WHERE BOARD_DELETE = 'N'
+        ORDER BY BOARD_REG_DT ASC
+    </select>
+    <select id="getBoardByDisplay" parameterType="vn.gov.knn.admin.board.board.Board" resultMap="BoardResultMap">
+        SELECT *
+        FROM TB_DSD_BOARD
+        WHERE BOARD_DELETE = 'N'
+          AND BOARD_DISPLAY = 'Y'
+    </select>
+
+    <sql id="selectWhereCondition">
+        <if test="keyWord != null and keyWord != ''">
+            AND UPPER(BOARD_NAME) LIKE UPPER(CONCAT("%",TRIM(#{keyWord}),"%"))
+        </if>
+    </sql>
+
+    <select id="getBoardList" parameterType="vn.gov.knn.admin.board.board.Board" resultMap="BoardResultMap">
+        SELECT * FROM (
+        SELECT
+        (@row_number := @row_number + 1) AS RN,
+        BOARD_SEQ, BOARD_NAME, BOARD_TYPE,BOARD_DISPLAY,BOARD_REG_DT,(SELECT COUNT (*) FROM TB_DSD_POST WHERE
+        TB_DSD_POST.BOARD_SEQ =
+        TB_DSD_BOARD.BOARD_SEQ AND TB_DSD_POST.POST_DELETE = 'N') AS number_board,BOARD_MOD_DT
+        FROM TB_DSD_BOARD , (SELECT @row_number := 0) AS RN
+        WHERE BOARD_DELETE = 'N'
+        <include refid="selectWhereCondition">
+        </include>
+        ORDER BY
+        <choose>
+            <when test="order != null and order != '' and sort != null and sort != ''">
+                <choose>
+                    <when test="order == 'board_name'">BOARD_NAME</when>
+                    <otherwise>BOARD_REG_DT</otherwise>
+                </choose>
+                <choose>
+                    <when test="sort == 'ASC'">ASC</when>
+                    <when test="sort == 'DESC'">DESC</when>
+                </choose>
+            </when>
+            <otherwise>BOARD_REG_DT DESC</otherwise>
+        </choose>
+        ) a
+        WHERE (
+        RN BETWEEN #{startRow} AND #{endRow}
+        )
+    </select>
+
+    <select id="countBoard" parameterType="vn.gov.knn.admin.board.board.Board" resultType="java.lang.Integer">
+        SELECT COUNT(*) FROM TB_DSD_BOARD
+        WHERE BOARD_DELETE = 0
+        <include refid="selectWhereCondition">
+        </include>
+    </select>
+    <select id="getBoardBySeq" resultType="vn.gov.knn.admin.board.board.Board">
+        SELECT *, TB_DSD_ADMIN.ADMIN_EMAIL AS board_reg_email
+        FROM TB_DSD_BOARD
+                 LEFT JOIN TB_DSD_ADMIN ON TB_DSD_BOARD.BOARD_REG_ADM = TB_DSD_ADMIN.ADMIN_SEQ
+        WHERE BOARD_SEQ = #{value}
+    </select>
+    <select id="getFirstBoard" resultType="vn.gov.knn.admin.board.board.Board">
+        SELECT *
+        FROM TB_DSD_BOARD
+        WHERE BOARD_DELETE = 'N'
+        ORDER BY BOARD_REG_DT LIMIT 1;
+    </select>
+    <select id="countTotalBoard" resultType="java.lang.Integer">
+        SELECT COUNT(*)
+        FROM TB_DSD_BOARD
+    </select>
+    <select id="countActiveBoard" resultType="java.lang.Integer">
+        SELECT COUNT(*)
+        FROM TB_DSD_BOARD
+        WHERE BOARD_DISPLAY = 'Y'
+    </select>
+
+    <insert id="saveBoard" parameterType="vn.gov.knn.admin.board.board.Board">
+        INSERT INTO TB_DSD_BOARD(BOARD_NAME, BOARD_TYPE, BOARD_PERM_WRITE, BOARD_PERM_VIEW_LIST, BOARD_PERM_VIEW_POST,
+                                 BOARD_PERM_DELETE, BOARD_FILES, BOARD_DISPLAY, BOARD_REG_ADM, BOARD_REG_DT,
+                                 BOARD_DELETE)
+        VALUES (#{board_name}, #{board_type}, #{board_perm_write}, #{board_perm_view_list}, #{board_perm_view_post},
+                #{board_perm_delete}, #{board_files}, #{board_display}, #{board_reg_adm}, #{board_reg_dt},
+                #{board_delete})
+    </insert>
+
+    <update id="updateBoard" parameterType="vn.gov.knn.admin.board.board.Board">
+        UPDATE TB_DSD_BOARD
+        SET BOARD_NAME           = #{board_name}
+          , BOARD_TYPE           = #{board_type}
+          , BOARD_PERM_WRITE     = #{board_perm_write}
+          , BOARD_PERM_VIEW_LIST = #{board_perm_view_list}
+          , BOARD_PERM_VIEW_POST = #{board_perm_view_post}
+          , BOARD_PERM_DELETE    = #{board_perm_delete}
+          , BOARD_FILES          = #{board_files}
+          , BOARD_DISPLAY        = #{board_display}
+          , BOARD_MOD_ADM        = #{board_mod_adm}
+          , BOARD_MOD_DT         = #{board_mod_dt}
+        WHERE BOARD_SEQ = #{board_seq}
+    </update>
+
+    <update id="deleteBoard" parameterType="vn.gov.knn.admin.board.board.Board">
+        UPDATE TB_DSD_BOARD
+        SET BOARD_DELETE = "Y"
+        WHERE BOARD_SEQ = #{value}
+    </update>
+</mapper>

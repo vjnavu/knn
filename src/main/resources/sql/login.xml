@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="vn.gov.knn.admin.log.signin.LoginMapper">
+    <resultMap id="SigninResultMap" type="vn.gov.knn.admin.log.signin.Login">
+        <result column="LOGIN_ADM" property="login_adm"/>
+        <result column="LOGIN_DT" property="login_dt"/>
+        <result column="LOGIN_IP" property="login_ip"/>
+        <result column="LOGIN_BROWSER" property="login_browser"/>
+        <result column="LOGIN_OS" property="login_os"/>
+
+        <result column="login_adm_email" property="login_adm_email"/>
+        <result column="login_adm_name" property="login_adm_name"/>
+        <result column="login_adm_role" property="login_adm_role"/>
+        <result column="login_date_format" property="login_date_format"/>
+    </resultMap>
+
+    <sql id="selectWhereCondition">
+        <if test="keyWord != null and keyWord != ''">
+            WHERE
+            <choose>
+                <when test="searchItem != null and searchItem != ''">
+                    <choose>
+                        <when test="searchItem == 'login_adm_email'">
+                            LOGIN_ADM IN (SELECT ADMIN_SEQ FROM TB_DSD_ADMIN WHERE TB_DSD_ADMIN.ADMIN_EMAIL LIKE
+                            UPPER(CONCAT("%",TRIM(#{keyWord}),"%")))
+                        </when>
+                        <when test="searchItem == 'login_adm_name'">
+                            LOGIN_ADM IN (SELECT ADMIN_SEQ FROM TB_DSD_ADMIN WHERE TB_DSD_ADMIN.ADMIN_NAME LIKE
+                            UPPER(CONCAT("%",TRIM(#{keyWord}),"%")))
+                        </when>
+                    </choose>
+                </when>
+                <otherwise>
+                    (LOGIN_ADM IN (SELECT ADMIN_SEQ FROM TB_DSD_ADMIN WHERE TB_DSD_ADMIN.ADMIN_EMAIL LIKE
+                    UPPER(CONCAT("%",TRIM(#{keyWord}),"%")))) OR
+                    (LOGIN_ADM IN (SELECT ADMIN_SEQ FROM TB_DSD_ADMIN WHERE TB_DSD_ADMIN.ADMIN_NAME LIKE
+                    UPPER(CONCAT("%",TRIM(#{keyWord}),"%"))))
+                    OR UPPER(LOGIN_BROWSER) LIKE UPPER(CONCAT("%",TRIM(#{keyWord}),"%"))
+                    OR UPPER(LOGIN_OS) LIKE UPPER(CONCAT("%",TRIM(#{keyWord}),"%"))
+                    OR UPPER(LOGIN_DT) LIKE UPPER(CONCAT("%",TRIM(#{keyWord}),"%"))
+                </otherwise>
+            </choose>
+        </if>
+    </sql>
+
+    <select id="getListSignin" parameterType="vn.gov.knn.admin.log.signin.Login" resultMap="SigninResultMap">
+        SELECT * FROM (
+        SELECT
+        (@row_number := @row_number + 1) AS RN,
+        LOGIN_ADM,LOGIN_DT,LOGIN_IP,LOGIN_BROWSER,LOGIN_OS, TB_DSD_ADMIN.ADMIN_EMAIL AS
+        login_adm_email,TB_DSD_ADMIN.ADMIN_NAME AS login_adm_name, TB_DSD_ADMIN.ADMIN_ROLE AS login_adm_role
+        FROM TB_DSD_LOGIN INNER JOIN TB_DSD_ADMIN on TB_DSD_LOGIN.LOGIN_ADM = TB_DSD_ADMIN.ADMIN_SEQ , (SELECT
+        @row_number := 0) AS RN
+        <include refid="selectWhereCondition">
+        </include>
+        ORDER BY
+        LOGIN_DT DESC
+        ) a
+        LIMIT #{size} OFFSET #{offset}
+    </select>
+
+
+    <select id="countSign" parameterType="vn.gov.knn.admin.log.signin.Login" resultType="INTEGER">
+        SELECT COUNT(*)
+        FROM TB_DSD_LOGIN INNER JOIN TB_DSD_ADMIN on TB_DSD_LOGIN.LOGIN_ADM = TB_DSD_ADMIN.ADMIN_SEQ
+        <include refid="selectWhereCondition">
+        </include>
+    </select>
+
+
+    <insert id="saveSignin" parameterType="vn.gov.knn.admin.log.signin.Login">
+        INSERT INTO TB_DSD_LOGIN(LOGIN_ADM, LOGIN_DT, LOGIN_IP, LOGIN_BROWSER, LOGIN_OS)
+        VALUES (#{login_adm}, #{login_dt}, #{login_ip}, #{login_browser}, #{login_os})
+    </insert>
+
+    <select id="getNumberOfAccessesToday" resultType="INTEGER">
+        SELECT COUNT(*)
+        FROM TB_DSD_LOGIN
+        WHERE DATE (NOW()) = DATE (TB_DSD_LOGIN.LOGIN_DT)
+    </select>
+    <select id="getAllNumberOfAccesses" resultType="INTEGER">
+        SELECT COUNT(*)
+        FROM TB_DSD_LOGIN
+    </select>
+    <select id="getAll" resultType="vn.gov.knn.admin.log.signin.Login">
+        SELECT
+            DATE_FORMAT(LOGIN_DT, '%m/%d/%Y %H:%i') AS login_date_format,LOGIN_ADM,LOGIN_DT,LOGIN_IP,LOGIN_BROWSER,LOGIN_OS, TB_DSD_ADMIN.ADMIN_EMAIL AS
+                                                login_adm_email,TB_DSD_ADMIN.ADMIN_NAME AS login_adm_name, TB_DSD_ADMIN.ADMIN_ROLE AS login_adm_role
+        FROM TB_DSD_LOGIN INNER JOIN TB_DSD_ADMIN on TB_DSD_LOGIN.LOGIN_ADM = TB_DSD_ADMIN.ADMIN_SEQ
+    </select>
+</mapper>

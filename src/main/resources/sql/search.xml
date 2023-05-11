@@ -1,0 +1,147 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="vn.gov.knn.user.search.SearchMapper">
+    <resultMap id="searchResultMap" type="vn.gov.knn.user.search.Search">
+        <id column="SEQ" property="seq"/>
+        <result column="TITLE_VN" property="title_vn"/>
+        <result column="TITLE_EN" property="title_en"/>
+        <result column="TEXT_VN" property="text_vn"/>
+        <result column="TEXT_EN" property="text_en"/>
+        <result column="TYPE" property="type"/>
+        <result column="REG_DT" property="reg_dt"/>
+    </resultMap>
+
+    <select id="getSearch" parameterType="vn.gov.knn.user.search.Search" resultMap="searchResultMap">
+        SELECT *
+        FROM (SELECT (@row_number := 0) AS RN,
+                     tdp.POST_SEQ       AS SEQ,
+                     tdp.POST_TITLE_VN  AS TITLE_VN,
+                     tdp.POST_TITLE_EN  AS TITLE_EN,
+                     tdp.POST_TEXT_VN   AS TEXT_VN,
+                     tdp.POST_TEXT_EN   AS TEXT_EN,
+                     'P'                AS TYPE,
+                     tdp.POST_REG_DT    AS REG_DT
+              FROM tb_dsd_post tdp
+                       INNER JOIN tb_dsd_board tdb ON tdb.BOARD_SEQ = tdp.BOARD_SEQ AND tdb.BOARD_TYPE != 'D'
+              WHERE UPPER(tdp.POST_TITLE_VN) LIKE UPPER(CONCAT("%", TRIM(#{keyWord}), "%"))
+                 OR UPPER(tdp.POST_TITLE_EN) LIKE UPPER(CONCAT("%", TRIM(#{keyWord}), "%"))
+                 OR UPPER(tdp.POST_TEXT_VN) LIKE UPPER(CONCAT("%", TRIM(#{keyWord}), "%"))
+                 OR UPPER(tdp.POST_TEXT_EN) LIKE UPPER(CONCAT("%", TRIM(#{keyWord}), "%"))
+                  AND tdp.POST_DISPLAY = 'Y'
+                  AND tdp.POST_DELETE = 'N'
+              UNION
+              SELECT (@row_number := 0) AS RN,
+                  tdc.CONTENT_SEQ,
+                  tdc.CONTENT_TITLE,
+                  '',
+                  tdc.CONTENT_TEXT_VN,
+                  tdc.CONTENT_TEXT_EN,
+                  'C',
+                  tdc.CONTENT_REG_DT
+              FROM tb_dsd_content tdc
+              WHERE UPPER (tdc.CONTENT_TITLE) LIKE UPPER (CONCAT("%"
+                  , TRIM (#{keyWord})
+                  , "%"))
+                 OR UPPER (tdc.CONTENT_TEXT_VN) LIKE UPPER (CONCAT("%"
+                  , TRIM (#{keyWord})
+                  , "%"))
+                 OR UPPER (tdc.CONTENT_TEXT_EN) LIKE UPPER (CONCAT("%"
+                  , TRIM (#{keyWord})
+                  , "%"))
+                AND tdc.CONTENT_DISPLAY = 'Y'
+                AND tdc.CONTENT_DELETE = 'N') a
+        ORDER BY REG_DT DESC
+            LIMIT #{size}
+        OFFSET #{offset}
+    </select>
+
+    <select id="countSearchResult" resultType="java.lang.Integer">
+        SELECT T1.C1 + T2.C2 AS TOTAL
+        FROM (SELECT COUNT(*) AS C1
+              FROM tb_dsd_post tdp
+                       INNER JOIN tb_dsd_board tdb ON tdb.BOARD_SEQ = tdp.BOARD_SEQ AND tdb.BOARD_TYPE != 'D'
+              WHERE UPPER(tdp.POST_TITLE_VN) LIKE UPPER(CONCAT("%", TRIM(#{keyWord}), "%"))
+                 OR UPPER(tdp.POST_TITLE_EN) LIKE UPPER(CONCAT("%", TRIM(#{keyWord}), "%"))
+                 OR UPPER(tdp.POST_TEXT_VN) LIKE UPPER(CONCAT("%", TRIM(#{keyWord}), "%"))
+                 OR UPPER(tdp.POST_TEXT_EN) LIKE UPPER(CONCAT("%", TRIM(#{keyWord}), "%"))
+                  AND tdp.POST_DISPLAY = 'Y'
+                  AND tdp.POST_DELETE = 'N'
+              ) AS T1,
+             (SELECT COUNT(*) AS C2
+              FROM tb_dsd_content tdc
+              WHERE UPPER(tdc.CONTENT_TITLE) LIKE UPPER(CONCAT("%", TRIM(#{keyWord}), "%"))
+                 OR UPPER(tdc.CONTENT_TEXT_VN) LIKE UPPER(CONCAT("%", TRIM(#{keyWord}), "%"))
+                 OR UPPER(tdc.CONTENT_TEXT_EN) LIKE UPPER(CONCAT("%", TRIM(#{keyWord}), "%"))
+                  AND tdc.CONTENT_DISPLAY = 'Y'
+                  AND tdc.CONTENT_DELETE = 'N') AS T2
+    </select>
+
+    <select id="countSearchPost" resultType="java.lang.Integer">
+        SELECT COUNT(*)
+        FROM tb_dsd_post tdp
+                 INNER JOIN tb_dsd_board tdb ON tdb.BOARD_SEQ = tdp.BOARD_SEQ AND tdb.BOARD_TYPE != 'D'
+        WHERE UPPER(tdp.POST_TITLE_VN) LIKE UPPER(CONCAT("%", TRIM(#{keyWord}), "%"))
+           OR UPPER(tdp.POST_TITLE_EN) LIKE UPPER(CONCAT("%", TRIM(#{keyWord}), "%"))
+           OR UPPER(tdp.POST_TEXT_VN) LIKE UPPER(CONCAT("%", TRIM(#{keyWord}), "%"))
+           OR UPPER(tdp.POST_TEXT_EN) LIKE UPPER(CONCAT("%", TRIM(#{keyWord}), "%"))
+            AND tdp.POST_DISPLAY = 'Y'
+            AND tdp.POST_DELETE = 'N'
+    </select>
+
+    <select id="countSearchContent" resultType="java.lang.Integer">
+        SELECT COUNT(*)
+        FROM tb_dsd_content tdc
+        WHERE UPPER(tdc.CONTENT_TITLE) LIKE UPPER(CONCAT("%", TRIM(#{keyWord}), "%"))
+           OR UPPER(tdc.CONTENT_TEXT_VN) LIKE UPPER(CONCAT("%", TRIM(#{keyWord}), "%"))
+           OR UPPER(tdc.CONTENT_TEXT_EN) LIKE UPPER(CONCAT("%", TRIM(#{keyWord}), "%"))
+            AND tdc.CONTENT_DISPLAY = 'Y'
+            AND tdc.CONTENT_DELETE = 'N'
+    </select>
+
+    <select id="getSearchPost" resultType="vn.gov.knn.user.search.Search">
+        SELECT *
+        FROM (SELECT (@row_number := 0) AS RN,
+                     tdp.POST_SEQ       AS SEQ,
+                     tdp.POST_TITLE_VN  AS TITLE_VN,
+                     tdp.POST_TITLE_EN  AS TITLE_EN,
+                     tdp.POST_TEXT_VN   AS TEXT_VN,
+                     tdp.POST_TEXT_EN   AS TEXT_EN,
+                     'P'                AS TYPE,
+                     tdp.POST_REG_DT    AS REG_DT
+              FROM tb_dsd_post tdp
+                       INNER JOIN tb_dsd_board tdb ON tdb.BOARD_SEQ = tdp.BOARD_SEQ AND tdb.BOARD_TYPE != 'D'
+              WHERE UPPER(tdp.POST_TITLE_VN) LIKE UPPER(CONCAT("%", TRIM(#{keyWord}), "%"))
+                 OR UPPER(tdp.POST_TITLE_EN) LIKE UPPER(CONCAT("%", TRIM(#{keyWord}), "%"))
+                 OR UPPER(tdp.POST_TEXT_VN) LIKE UPPER(CONCAT("%", TRIM(#{keyWord}), "%"))
+                 OR UPPER(tdp.POST_TEXT_EN) LIKE UPPER(CONCAT("%", TRIM(#{keyWord}), "%"))
+                  AND tdp.POST_DISPLAY = 'Y'
+                  AND tdp.POST_DELETE = 'N'
+                  ) a
+        ORDER BY REG_DT DESC
+            LIMIT #{size}
+        OFFSET #{offset}
+    </select>
+
+    <select id="getSearchContent" resultType="vn.gov.knn.user.search.Search">
+        SELECT *
+        FROM (SELECT (@row_number := 0)  AS RN,
+                     tdc.CONTENT_SEQ     AS SEQ,
+                     tdc.CONTENT_TITLE   AS TITLE_VN,
+                     ''                  AS TITLE_EN,
+                     tdc.CONTENT_TEXT_VN AS TEXT_VN,
+                     tdc.CONTENT_TEXT_EN AS TEXT_EN,
+                     'C'                 AS TYPE,
+                     tdc.CONTENT_REG_DT  AS REG_DT
+              FROM tb_dsd_content tdc
+              WHERE UPPER(tdc.CONTENT_TITLE) LIKE UPPER(CONCAT("%", TRIM(#{keyWord}), "%"))
+                 OR UPPER(tdc.CONTENT_TEXT_VN) LIKE UPPER(CONCAT("%", TRIM(#{keyWord}), "%"))
+                 OR UPPER(tdc.CONTENT_TEXT_EN) LIKE UPPER(CONCAT("%", TRIM(#{keyWord}), "%"))
+                  AND tdc.CONTENT_DISPLAY = 'Y'
+                  AND tdc.CONTENT_DELETE = 'N') a
+        ORDER BY REG_DT DESC
+            LIMIT #{size}
+        OFFSET #{offset}
+    </select>
+
+
+</mapper>

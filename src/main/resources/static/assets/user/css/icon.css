@@ -1,0 +1,353 @@
+@charset "utf-8";
+
+.icon {
+    display: flex;
+}
+
+.arrow-left::before {
+    content: '';
+    background: url(../image/icon/arrow-left.png) no-repeat center/100%;
+    width: 8px;
+    height: 12px;
+    display: inline-block;
+}
+
+.arrows-left::before {
+    content: '';
+    background: url(../image/icon/arrows-left.png) no-repeat center/100%;
+    width: 14px;
+    height: 12px;
+    display: inline-block;
+}
+
+.arrow-right::before {
+    content: '';
+    background: url(../image/icon/arrow-right.png) no-repeat center/100%;
+    width: 8px;
+    height: 12px;
+    display: inline-block;
+}
+
+.arrows-right::before {
+    content: '';
+    background: url(../image/icon/arrows-right.png) no-repeat center/100%;
+    width: 14px;
+    height: 12px;
+    display: inline-block;
+}
+
+.icon-global::before {
+    content: '';
+    background: url(../image/icon/global.png) no-repeat center/100%;
+    width: 15px;
+    height: 15px;
+    display: inline-block;
+}
+
+.icon-q::before {
+    content: '';
+    background: url(../image/icon/icon-q.png) no-repeat center/100%;
+    width: 20px;
+    height: 20px;
+    display: inline-block;
+}
+
+.icon-a::before {
+    content: '';
+    background: url(../image/icon/icon-a.png) no-repeat center/100%;
+    width: 20px;
+    height: 20px;
+    display: inline-block;
+}
+
+.icon-breadcrumb::before {
+    content: '';
+    background: url(../image/icon/breadcrumb.png) no-repeat center/100%;
+    width: 4px;
+    height: 6px;
+    display: inline-block;
+}
+
+.icon-pin::before {
+    content: '';
+    background: url(../image/icon/pin.png) no-repeat center;
+    width: 24px;
+    height: 24px;
+    display: inline-block;
+}
+
+.icon-mail::before {
+    content: '';
+    background: url(../image/icon/mail.png) no-repeat center;
+    width: 24px;
+    height: 24px;
+    display: inline-block;
+}
+
+.icon-phone::before {
+    content: '';
+    background: url(../image/icon/phone.png) no-repeat center;
+    width: 24px;
+    height: 24px;
+    display: inline-block;
+}
+
+.icon-play::before {
+    content: '';
+    background: url(../image/icon/play.png) no-repeat center;
+    width: 45px;
+    height: 45px;
+    display: inline-block;
+}
+
+.icon-plus {
+    width: 27px;
+    height: 27px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #fff;
+    border-radius: 50%;
+}
+
+.icon-plus::before {
+    content: '';
+    background: url(../image/icon/plus.png) no-repeat center;
+    width: 12px;
+    height: 12px;
+    display: inline-block;
+}
+
+.icon-new {
+    background: #ec6c61;
+    width: 26px;
+    height: 26px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: absolute;
+    right: 0;
+    top: 0;
+    border-radius: 50%;
+}
+
+.icon-new::before {
+    content: 'N';
+    font-weight: bold;
+    font-size: 12px;
+    color: #fff;
+}
+
+.icon-hamburger-bar::before {
+    content: '';
+    background: url(../image/icon/hamburger-bar.png) no-repeat center;
+    width: 20px;
+    height: 16px;
+    display: inline-block;
+}
+
+.icon-attach::before {
+    content: '';
+    background: url(../image/icon/attach.png) no-repeat center;
+    width: 22px;
+    height: 20px;
+}
+
+.icon-attach:hover::before {
+    content: '';
+    background: url(../image/icon/attach-hover.png) no-repeat center;
+    width: 22px;
+    height: 20px;
+}
+
+.icon-arrow-up::before {
+    content: '';
+    background: url(../image/icon/arrow-up.png) no-repeat center;
+    width: 10px;
+    height: 6px;
+}
+
+.icon-arrow-down::before {
+    content: '';
+    background: url(../image/icon/arrow-up.png) no-repeat center;
+    width: 10px;
+    height: 6px;
+    transform: rotate(180deg);
+}
+
+.icon-success::before {
+    content: '';
+    background: url(../image/icon/checked.png) no-repeat center;
+    width: 25px;
+    height: 25px;
+    background-size: contain;
+}
+
+.icon-error::before {
+    content: '';
+    background: url(../image/icon/error.png) no-repeat center;
+    width: 25px;
+    height: 25px;
+    background-size: contain;
+}
+
+.icon-file {
+    width: 25px;
+    height: 37px;
+    border-radius: 5px;
+    background: #fff;
+    box-shadow: -3px 3px 10px rgb(0 0 0 / 20%);
+}
+
+.icon-file:before {
+    content: '';
+    position: absolute;
+    right: 0;
+    top: -1px;
+    width: 10px;
+    height: 10px;
+    background: #ddd;
+    box-shadow: -3px 3px 10px rgb(0 0 0 / 20%);
+    border-radius: 0 0 0 5px;
+}
+
+.icon-file:after {
+    content: '';
+    position: absolute;
+    right: -11px;
+    top: -7px;
+    width: 25px;
+    height: 10px;
+    background: #fff;
+    transform: rotate(45deg);
+    z-index: 1;
+}
+
+.icon-file .type-name {
+    position: absolute;
+    left: -8px;
+    top: 9px;
+    padding: 0 4px;
+    color: #fff;
+    height: 18px;
+    font-size: 10px;
+    font-weight: 600;
+    border-radius: 5px;
+    box-shadow: -3px 3px 10px rgb(0 0 0 / 20%);
+}
+
+.icon-file .type-name:after {
+    content: '';
+    position: absolute;
+    bottom: -3px;
+    left: 3px;
+    width: 10px;
+    height: 5px;
+    z-index: -1;
+    transform: rotate(45deg);
+}
+
+.icon-next {
+    background: url(../image/icon/next.png);
+}
+
+.icon-prev {
+    background: url(../image/icon/previous.png);
+}
+
+.icon-docx:after,
+.icon-doc:after,
+.icon-docm:after,
+.icon-docx,
+.icon-doc,
+.icon-docm {
+    background: #295497 !important;
+}
+
+.icon-xls:after,
+.icon-xlsx:after,
+.icon-xls,
+.icon-xlsx {
+    background: #1f7244 !important;
+}
+
+.icon-pptx:after,
+.icon-ppt:after,
+.icon-pptx,
+.icon-ppt {
+    background: #ff5722 !important;
+}
+
+.icon-png:after,
+.icon-png {
+    background: #a066aa !important;
+}
+
+.icon-jpg:after,
+.icon-jpg {
+    background: #14a085 !important;
+}
+
+.icon-tar::after,
+.icon-7z::after,
+.icon-rar::after,
+.icon-zip::after,
+.icon-tar,
+.icon-7z,
+.icon-rar,
+.icon-zip {
+    background: #008857 !important;
+}
+
+
+.icon-gif:after,
+.icon-gif {
+    background: #5153ff !important;
+}
+
+.icon-pdf::after,
+.icon-pdf {
+    background: #f90605 !important;
+}
+
+.icon-close:before {
+    content: '';
+    background: url(../image/icon/close.png) no-repeat;
+    width: 36px;
+    height: 36px;
+    object-fit: contain;
+}
+
+.icon-legal-document:before {
+    content: '';
+    background: url(../image/icon/legal-document.png) no-repeat;
+    width: 44px;
+    height: 44px;
+    object-fit: contain;
+}
+
+.icon-marking:before {
+    content: '';
+    background: url(../image/icon/marking.png) no-repeat;
+    width: 44px;
+    height: 44px;
+    object-fit: contain;
+}
+
+.icon-private:before {
+    content: '';
+    background: url(../image/icon/lock.png) no-repeat;
+    background-size: 100%;
+    width: 20px;
+    height: 20px;
+    display: inline-block;
+}
+
+.icon-search:before {
+    content: '';
+    background: url(../image/icon/search.png) no-repeat;
+    width: 20px;
+    height: 20px;
+    display: inline-block;
+    background-size: contain;
+}

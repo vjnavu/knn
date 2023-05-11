@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="vn.gov.knn.admin.certificate.cert1.Cert1Mapper">
+    <resultMap id="Cert1ResultMap" type="vn.gov.knn.admin.certificate.cert1.Cert1">
+        <id column="CERT1_SEQ" property="cert1_seq"/>
+        <result column="CERT1_NAME" property="cert1_name"/>
+        <result column="CERT1_ICON" property="cert1_icon"/>
+        <result column="CERT1_SORT" property="cert1_sort"/>
+        <result column="CERT1_DISPLAY" property="cert1_display"/>
+        <result column="CERT1_REG_DT" property="cert1_reg_dt"/>
+        <result column="CERT1_MOD_DT" property="cert1_mod_dt"/>
+        <result column="CERT1_DELETE" property="cert1_delete"/>
+
+        <result column="cert1_icon_uuid" property="cert1_icon_uuid"/>
+        <result column="cert3_quantity" property="cert3_quantity"/>
+    </resultMap>
+    <sql id="selectWhereCondition">
+        <if test="keyWord != null and keyWord != ''">
+            AND
+            UPPER(CERT1_NAME) LIKE UPPER(CONCAT("%",TRIM(#{keyWord}),"%"))
+            OR CERT1_SEQ IN (SELECT CERT1_SEQ FROM TB_DSD_CERT2 WHERE UPPER(CERT2_NAME) LIKE
+            UPPER(CONCAT("%",TRIM(#{keyWord}),"%")))
+            OR CERT1_SEQ IN (SELECT CERT1_SEQ FROM TB_DSD_CERT3 WHERE UPPER(CERT3_NAME) LIKE
+            UPPER(CONCAT("%",TRIM(#{keyWord}),"%")))
+        </if>
+    </sql>
+    <insert id="addCert1Post">
+        INSERT INTO TB_DSD_CERT1(CERT1_SEQ, CERT1_NAME, CERT1_DISPLAY, CERT1_REG_DT, CERT1_ICON, CERT1_SORT,CERT1_DELETE) VALUE (#{cert1_seq},#{cert1_name},#{cert1_display},#{cert1_reg_dt},#{cert1_icon},#{cert1_sort},'N')
+    </insert>
+    <select id="getListCert1" resultType="vn.gov.knn.admin.certificate.cert1.Cert1">
+        SELECT * FROM (
+        SELECT
+        (@row_number := @row_number + 1) AS RN,
+        CERT1_SEQ, CERT1_NAME, CERT1_ICON,CERT1_SORT,CERT1_DISPLAY,CERT1_REG_DT,CERT1_MOD_DT,(SELECT COUNT (*) FROM
+        TB_DSD_CERT3 WHERE TB_DSD_CERT3.CERT1_SEQ = TB_DSD_CERT1.CERT1_SEQ) AS cert3_quantity
+        FROM TB_DSD_CERT1 , (SELECT @row_number := 0) AS RN
+        WHERE CERT1_DELETE != 'Y'
+        <include refid="selectWhereCondition">
+        </include>
+        ORDER BY CERT1_SORT ASC
+        ) a
+        LIMIT 3 OFFSET #{offset}
+    </select>
+    <select id="countCert1" resultType="java.lang.Integer">
+        SELECT COUNT(*) FROM TB_DSD_CERT1
+        <if test="keyWord != null and keyWord != ''">
+            WHERE UPPER(CERT1_NAME) LIKE UPPER(CONCAT("%",TRIM(#{keyWord}),"%"))
+            OR CERT1_SEQ IN (SELECT CERT1_SEQ FROM TB_DSD_CERT2 WHERE UPPER(CERT2_NAME) LIKE
+            UPPER(CONCAT("%",TRIM(#{keyWord}),"%")))
+            OR CERT1_SEQ IN (SELECT CERT1_SEQ FROM TB_DSD_CERT3 WHERE UPPER(CERT3_NAME) LIKE
+            UPPER(CONCAT("%",TRIM(#{keyWord}),"%")))
+        </if>
+    </select>
+    <select id="countAll" resultType="java.lang.Integer">
+        SELECT COUNT(*)
+        FROM TB_DSD_CERT1
+        WHERE CERT1_DELETE != 'Y'
+    </select>
+
+    <select id="countSeq" resultType="java.lang.Integer">
+        SELECT COUNT(*)
+        FROM TB_DSD_CERT1
+    </select>
+    <select id="getAll" resultType="vn.gov.knn.admin.certificate.cert1.Cert1">
+        SELECT *, TB_DSD_FILE.FILE_UUID AS cert1_icon_uuid
+        FROM TB_DSD_CERT1
+                 LEFT JOIN TB_DSD_FILE ON TB_DSD_CERT1.CERT1_ICON = TB_DSD_FILE.FILE_SEQ
+        WHERE CERT1_DELETE != 'Y'
+    </select>
+    <select id="getCert1BySeq" resultType="vn.gov.knn.admin.certificate.cert1.Cert1">
+        SELECT *, TB_DSD_FILE.file_uuid AS cert1_icon_uuid
+        FROM TB_DSD_CERT1
+                 LEFT JOIN TB_DSD_FILE ON TB_DSD_CERT1.CERT1_ICON = TB_DSD_FILE.file_seq
+        WHERE CERT1_SEQ = #{value}
+          AND CERT1_DELETE != 'Y'
+    </select>
+
+    <sql id="selectWhereConditionUser">
+        <if test="keyWord != null and keyWord != ''">
+            AND
+            UPPER(CERT1_NAME) LIKE UPPER(CONCAT("%",TRIM(#{keyWord}),"%"))
+        </if>
+    </sql>
+    <select id="getAllByStatus" resultType="vn.gov.knn.admin.certificate.cert1.Cert1">
+        SELECT *,
+        TB_DSD_FILE.FILE_UUID AS cert1_icon_uuid,
+        (select count(*) from TB_DSD_CERT3 WHERE TB_DSD_CERT1.CERT1_SEQ = TB_DSD_CERT3.CERT1_SEQ) AS cert3_quantity
+        FROM TB_DSD_CERT1
+        LEFT JOIN TB_DSD_FILE ON TB_DSD_CERT1.CERT1_ICON = TB_DSD_FILE.FILE_SEQ
+        <!--LEFT JOIN TB_DSD_CERT2 ON TB_DSD_CERT2.CERT1_SEQ = TB_DSD_CERT1.CERT1_SEQ-->
+        WHERE CERT1_DELETE != 'Y' AND CERT1_DISPLAY = 'Y'
+        <include refid="selectWhereConditionUser">
+        </include>
+    </select>
+
+    <select id="countTotalCert1" resultType="java.lang.Integer">
+        SELECT COUNT(*)
+        FROM TB_DSD_CERT1
+    </select>
+
+    <select id="countActiveCert1" resultType="java.lang.Integer">
+        SELECT COUNT(*)
+        FROM TB_DSD_CERT1
+        WHERE CERT1_DISPLAY = 'Y'
+    </select>
+    <update id="deleteCert1">
+        UPDATE TB_DSD_CERT1
+        SET CERT1_DELETE = 'Y'
+        WHERE CERT1_SEQ = #{value}
+    </update>
+
+    <update id="updateCert1P">
+        UPDATE TB_DSD_CERT1
+        SET CERT1_NAME    = #{cert1_name},
+            CERT1_ICON    = #{cert1_icon},
+            CERT1_SORT    = #{cert1_sort},
+            CERT1_DISPLAY = #{cert1_display},
+            CERT1_MOD_DT  = #{cert1_mod_dt}
+        WHERE CERT1_SEQ = #{cert1_seq}
+    </update>
+</mapper>

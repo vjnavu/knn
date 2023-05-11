@@ -1,0 +1,131 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="vn.gov.knn.admin.content.ContentMapper">
+    <resultMap id="ContentResultMap" type="vn.gov.knn.admin.content.Content">
+        <id column="CONTENT_SEQ" property="ctn_seq"/>
+        <result column="CONTENT_TITLE" property="ctn_title"/>
+        <result column="CONTENT_TEXT_VN" property="ctn_text_vn"/>
+        <result column="CONTENT_HYPER_TEXT_VN" property="ctn_hyper_text_vn"/>
+        <result column="CONTENT_TEXT_EN" property="ctn_text_en"/>
+        <result column="CONTENT_HYPER_TEXT_EN" property="ctn_hyper_text_en"/>
+        <result column="CONTENT_DISPLAY" property="ctn_display"/>
+        <result column="CONTENT_DELETE" property="ctn_delete"/>
+        <result column="CONTENT_REG_ADM" property="ctn_reg_adm"/>
+        <result column="CONTENT_REG_DT" property="ctn_reg_dt"/>
+        <result column="CONTENT_MOD_ADM" property="ctn_mod_adm"/>
+        <result column="CONTENT_MOD_DT" property="ctn_mod_dt"/>
+
+        <result column="ctn_reg_email" property="ctn_reg_email"/>
+    </resultMap>
+
+    <select id="getAllContent" parameterType="vn.gov.knn.admin.content.Content" resultMap="ContentResultMap">
+        SELECT *
+        FROM TB_DSD_CONTENT
+        WHERE CONTENT_DELETE = 'N'
+        ORDER BY CONTENT_REG_DT DESC
+    </select>
+
+    <sql id="selectWhereCondition">
+        <if test="keyWord != null and keyWord != ''">
+            <choose>
+                <when test="searchItem != null and searchItem != ''">
+                    <choose>
+                        <when test="searchItem == 'ctn_title'">
+                            AND UPPER(CONTENT_TITLE) LIKE UPPER(CONCAT("%",TRIM(#{keyWord}),"%"))
+                        </when>
+                        <when test="searchItem == 'ctn_content'">
+                            AND UPPER(CONTENT_TEXT_VN) LIKE UPPER(CONCAT("%",TRIM(#{keyWord}),"%"))
+                            OR UPPER(CONTENT_TEXT_EN) LIKE UPPER(CONCAT("%",TRIM(#{keyWord}),"%"))
+                        </when>
+                    </choose>
+                </when>
+                <otherwise>
+                    AND (
+                    UPPER(CONTENT_TITLE) LIKE UPPER(CONCAT("%",TRIM(#{keyWord}),"%"))
+                    OR UPPER(CONTENT_TEXT_VN) LIKE UPPER(CONCAT("%",TRIM(#{keyWord}),"%"))
+                    OR UPPER(CONTENT_TEXT_EN) LIKE UPPER(CONCAT("%",TRIM(#{keyWord}),"%"))
+                    )
+                </otherwise>
+            </choose>
+        </if>
+    </sql>
+
+    <select id="getListContent" parameterType="vn.gov.knn.admin.content.Content" resultMap="ContentResultMap">
+        SELECT * FROM (
+        SELECT
+        (@row_number := @row_number + 1) AS RN,
+        CONTENT_SEQ,CONTENT_TITLE,CONTENT_DISPLAY,CONTENT_MOD_DT,CONTENT_REG_DT,TB_DSD_ADMIN.ADMIN_EMAIL AS
+        ctn_reg_email
+        FROM TB_DSD_CONTENT LEFT JOIN TB_DSD_ADMIN ON TB_DSD_CONTENT.CONTENT_REG_ADM = TB_DSD_ADMIN.ADMIN_SEQ, (SELECT
+        @row_number := 0) AS RN
+        WHERE CONTENT_DELETE = 'N'
+        <include refid="selectWhereCondition"></include>
+        ORDER BY
+        <choose>
+            <when test="order != null and order != '' and sort != null and sort != ''">
+                <choose>
+                    <when test="order == 'ctn_title'">CONTENT_TITLE</when>
+                    <otherwise>CONTENT_REG_DT</otherwise>
+                </choose>
+                <choose>
+                    <when test="sort == 'ASC'">ASC</when>
+                    <when test="sort == 'DESC'">DESC</when>
+                </choose>
+            </when>
+            <otherwise>CONTENT_REG_DT DESC</otherwise>
+        </choose>
+        ) a
+        WHERE (
+        RN BETWEEN #{startRow} AND #{endRow}
+        )
+    </select>
+
+    <select id="countContent" parameterType="vn.gov.knn.admin.content.Content" resultType="INTEGER">
+        SELECT COUNT(*) FROM TB_DSD_CONTENT
+        WHERE CONTENT_DELETE = 'N'
+        <include refid="selectWhereCondition"></include>
+    </select>
+
+    <insert id="saveContent" parameterType="vn.gov.knn.admin.content.Content">
+        INSERT INTO TB_DSD_CONTENT(CONTENT_TITLE, CONTENT_TEXT_VN, CONTENT_HYPER_TEXT_VN, CONTENT_TEXT_EN,
+                                   CONTENT_HYPER_TEXT_EN, CONTENT_DISPLAY, CONTENT_REG_ADM, CONTENT_REG_DT,
+                                   CONTENT_DELETE)
+        VALUES (#{ctn_title}, #{ctn_text_vn}, #{ctn_hyper_text_vn}, #{ctn_text_en}, #{ctn_hyper_text_en},
+                #{ctn_display}, #{ctn_reg_adm}, #{ctn_reg_dt}, #{ctn_delete})
+    </insert>
+
+    <select id="getContentBySeq" parameterType="vn.gov.knn.admin.content.Content" resultMap="ContentResultMap">
+        SELECT *, TB_DSD_ADMIN.ADMIN_EMAIL AS ctn_reg_email
+        FROM TB_DSD_CONTENT
+                 LEFT JOIN TB_DSD_ADMIN ON TB_DSD_CONTENT.CONTENT_REG_ADM = TB_DSD_ADMIN.ADMIN_SEQ
+        WHERE CONTENT_SEQ = #{ctn_seq}
+    </select>
+    <select id="countTotalContent" resultType="java.lang.Integer">
+        SELECT COUNT(*)
+        FROM TB_DSD_CONTENT
+    </select>
+    <select id="countActiveContent" resultType="java.lang.Integer">
+        SELECT COUNT(*)
+        FROM TB_DSD_CONTENT
+        WHERE CONTENT_DISPLAY = 'Y'
+    </select>
+
+    <update id="updateContent" parameterType="vn.gov.knn.admin.content.Content">
+        UPDATE TB_DSD_CONTENT
+        SET CONTENT_TITLE         = #{ctn_title}
+          , CONTENT_TEXT_VN       = #{ctn_text_vn}
+          , CONTENT_HYPER_TEXT_VN = #{ctn_hyper_text_vn}
+          , CONTENT_TEXT_EN       = #{ctn_text_en}
+          , CONTENT_HYPER_TEXT_EN = #{ctn_hyper_text_en}
+          , CONTENT_DISPLAY       = #{ctn_display}
+          , CONTENT_MOD_ADM       = #{ctn_mod_adm}
+          , CONTENT_MOD_DT        = #{ctn_mod_dt}
+        WHERE CONTENT_SEQ = #{ctn_seq}
+    </update>
+
+    <update id="deleteContent" parameterType="vn.gov.knn.admin.content.Content">
+        UPDATE TB_DSD_CONTENT
+        SET CONTENT_DELETE = 'Y'
+        WHERE CONTENT_SEQ = #{ctn_seq}
+    </update>
+</mapper>

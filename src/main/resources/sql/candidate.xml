@@ -1,0 +1,148 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="vn.gov.knn.admin.candidate.CandidateMapper">
+    <resultMap id="CanResultMap" type="Candidate">
+        <id column="CDD_SEQ" property="cdd_seq"/>
+        <result column="EXAM_SEQ" property="exam_seq"/>
+        <result column="CERT2_SEQ" property="cert2_seq"/>
+        <result column="CDD_NAME" property="cdd_name"/>
+        <result column="CDD_AVATAR" property="cdd_avatar"/>
+        <result column="CDD_GENDER" property="cdd_gender"/>
+        <result column="CDD_POSITION" property="cdd_position"/>
+        <result column="CDD_BIRTHDAY" property="cdd_birthday"/>
+        <result column="CDD_OFFICE" property="cdd_office"/>
+        <result column="CDD_ORGANIZE" property="cdd_organize"/>
+        <result column="CDD_EXAM_ADDRESS" property="cdd_exam_address"/>
+        <result column="CDD_POSI_ORGANIZE" property="cdd_posi_organize"/>
+        <result column="CDD_SCORE" property="cdd_score"/>
+        <result column="CDD_SCORE_CIS" property="cdd_score_cis"/>
+        <result column="CDD_AWARD" property="cdd_award"/>
+        <result column="exam_name" property="exam_name"/>
+        <result column="cdd_logo_uuid" property="cdd_logo_uuid"/>
+        <result column="cert2_name" property="cert2_name"/>
+    </resultMap>
+
+    <sql id="selectWhereCondition">
+        <if test="keyWord != null and keyWord != ''">
+            WHERE UPPER(CDD_NAME) LIKE UPPER(CONCAT("%",TRIM(#{keyWord}),"%"))
+        </if>
+    </sql>
+    <insert id="saveNewCandidate" parameterType="vn.gov.knn.admin.candidate.Candidate">
+        INSERT INTO TB_DSD_CANDIDATE(EXAM_SEQ, CERT2_SEQ, CDD_NAME, CDD_GENDER, CDD_POSITION, CDD_BIRTHDAY,
+                                     CDD_OFFICE,
+                                     CDD_ORGANIZE,
+                                     CDD_EXAM_ADDRESS, CDD_POSI_ORGANIZE, CDD_SCORE, CDD_SCORE_CIS, CDD_AWARD,
+                                     CDD_AVATAR)
+        VALUES (#{exam_seq}, #{cert2_seq}, #{cdd_name}, #{cdd_gender}, #{cdd_position}, #{cdd_birthday},
+                #{cdd_office},
+                #{cdd_organize},
+                #{cdd_exam_address}, #{cdd_posi_organize}, #{cdd_score}, #{cdd_score_cis}, #{cdd_award}, #{cdd_avatar})
+    </insert>
+    <update id="updateCandidate">
+        UPDATE TB_DSD_CANDIDATE
+        SET CDD_AVATAR        = #{cdd_avatar},
+            CDD_NAME          = #{cdd_name},
+            CDD_GENDER        = #{cdd_gender},
+            CDD_BIRTHDAY      = #{cdd_birthday},
+            CDD_POSITION      = #{cdd_position},
+            EXAM_SEQ          = #{exam_seq},
+            CERT2_SEQ         = #{cert2_seq},
+            CDD_OFFICE        = #{cdd_office},
+            CDD_ORGANIZE      = #{cdd_organize},
+            CDD_EXAM_ADDRESS  = #{cdd_exam_address},
+            CDD_POSI_ORGANIZE = #{cdd_posi_organize},
+            CDD_SCORE         = #{cdd_score},
+            CDD_SCORE_CIS     = #{cdd_score_cis},
+            CDD_AWARD         = #{cdd_award}
+        WHERE CDD_SEQ = #{cdd_seq}
+
+    </update>
+    <delete id="deleteCandidate">
+        DELETE
+        FROM TB_DSD_CANDIDATE
+        WHERE TB_DSD_CANDIDATE.CDD_SEQ = #{value}
+    </delete>
+
+    <select id="getListCandidate" resultType="vn.gov.knn.admin.candidate.Candidate" resultMap="CanResultMap">
+        SELECT * FROM (
+        SELECT
+        (@row_number := @row_number + 1) AS RN,
+        CDD_SEQ,CDD_NAME,CDD_GENDER,CDD_POSITION,CDD_BIRTHDAY,CDD_OFFICE,CDD_ORGANIZE,CDD_EXAM_ADDRESS,CDD_POSI_ORGANIZE,CDD_SCORE,CDD_SCORE_CIS,CDD_AWARD,
+        TB_DSD_FILE.file_uuid as cdd_logo_uuid,
+        TB_DSD_CERT2.cert2_name as cert2_name,
+        TB_DSD_EXAM.exam_name as exam_name
+        FROM TB_DSD_CANDIDATE
+        LEFT OUTER JOIN TB_DSD_FILE ON TB_DSD_CANDIDATE.CDD_AVATAR = TB_DSD_FILE.FILE_SEQ
+        LEFT OUTER JOIN TB_DSD_CERT2 ON TB_DSD_CANDIDATE.CERT2_SEQ = TB_DSD_CERT2.CERT2_SEQ
+        LEFT OUTER JOIN TB_DSD_EXAM ON TB_DSD_CANDIDATE.EXAM_SEQ = TB_DSD_EXAM.EXAM_SEQ,
+        (SELECT @row_number := 0) AS RN
+        <include refid="selectWhereCondition"></include>
+        ORDER BY
+        <choose>
+            <when test="order != null and order != '' and sort != null and sort != ''">
+                <choose>
+                    <when test="order == 'cdd_name'">CDD_NAME</when>
+                    <otherwise>CDD_SEQ</otherwise>
+                </choose>
+                <choose>
+                    <when test="sort == 'ASC'">ASC</when>
+                    <when test="sort == 'DESC'">DESC</when>
+                </choose>
+            </when>
+            <otherwise>CDD_SEQ DESC</otherwise>
+        </choose>
+        ) a
+        WHERE (
+        RN BETWEEN #{startRow} AND #{endRow}
+        )
+    </select>
+
+    <select id="countCandidate" parameterType="vn.gov.knn.admin.candidate.Candidate" resultType="java.lang.Integer">
+        SELECT COUNT(*) FROM TB_DSD_CANDIDATE
+        WHERE EXAM_SEQ = #{exam_seq}
+        <if test="keyWord != null and keyWord != ''">
+            AND UPPER(CDD_NAME) LIKE UPPER(CONCAT("%",TRIM(#{keyWord}),"%"))
+        </if>
+    </select>
+    <select id="getCandidateBySeq" resultType="vn.gov.knn.admin.candidate.Candidate">
+        SELECT CDD_SEQ,
+               EXAM_SEQ,
+               CERT2_SEQ,
+               CDD_NAME,
+               CDD_GENDER,
+               CDD_POSITION,
+               CDD_BIRTHDAY,
+               CDD_OFFICE,
+               CDD_ORGANIZE,
+               CDD_EXAM_ADDRESS,
+               CDD_POSI_ORGANIZE,
+               CDD_SCORE,
+               CDD_SCORE_CIS,
+               CDD_AWARD,
+               CDD_AVATAR,
+               TB_DSD_FILE.file_uuid as cdd_logo_uuid
+        FROM TB_DSD_CANDIDATE
+                 LEFT OUTER JOIN TB_DSD_FILE ON TB_DSD_CANDIDATE.CDD_AVATAR = TB_DSD_FILE.FILE_SEQ
+        WHERE CDD_SEQ = #{value}
+    </select>
+    <select id="getCddByExam" resultType="vn.gov.knn.admin.candidate.Candidate">
+        SELECT *
+        FROM (SELECT (@row_number := @row_number + 1) AS RN,
+                     CDD_NAME,
+                     CDD_GENDER,
+                     CDD_BIRTHDAY,
+                     CDD_OFFICE,
+                     CDD_AWARD,
+                     TB_DSD_CERT2.cert2_name          as cert2_name
+              FROM TB_DSD_CANDIDATE
+                       LEFT OUTER JOIN TB_DSD_CERT2 ON TB_DSD_CANDIDATE.CERT2_SEQ = TB_DSD_CERT2.CERT2_SEQ,
+                   (SELECT @row_number := 0) AS RN
+              WHERE EXAM_SEQ = #{exam_seq}) a
+        WHERE (RN BETWEEN #{startRow} AND #{endRow})
+    </select>
+    <select id="countAllCandidate" resultType="java.lang.Integer">
+        SELECT COUNT(*) FROM TB_DSD_CANDIDATE
+        <include refid="selectWhereCondition"></include>
+    </select>
+
+</mapper>

@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="vn.gov.knn.admin.board.post.view.CountViewMapper">
+    <resultMap id="viewResultMap" type="vn.gov.knn.admin.board.post.view.CountView">
+        <id column="VP_SEQ" property="vp_seq"/>
+        <result column="POST_SEQ" property="post_seq"/>
+        <result column="VP_SESSION_ID" property="vp_session_id"/>
+    </resultMap>
+    <update id="updateSessionId">
+        UPDATE TB_DSD_VIEW_POST
+        SET VP_SESSION_ID = #{vp_session_id}
+        WHERE VP_SEQ = #{vp_seq}
+    </update>
+    <update id="saveCountView">
+        INSERT INTO TB_DSD_VIEW_POST(POST_SEQ, VP_SESSION_ID)
+        VALUES (#{post_seq}, #{vp_session_id})
+    </update>
+    <delete id="deleteBySessionId">
+        DELETE
+        FROM TB_DSD_VIEW_POST
+        WHERE VP_SESSION_ID = #{value}
+    </delete>
+    <select id="getCountView" resultType="vn.gov.knn.admin.board.post.view.CountView">
+        SELECT *
+        FROM TB_DSD_VIEW_POST
+        WHERE POST_SEQ = #{post_seq}
+          AND VP_SESSION_ID = #{vp_session_id}
+    </select>
+</mapper>

@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="vn.gov.knn.admin.visitor.VisitorMapper">
+    <resultMap id="VisitorResultMap" type="Visitor">
+        <result column="VISITOR_DT" property="vs_dt"/>
+        <result column="VISITOR_TOTAL" property="vs_total"/>
+    </resultMap>
+    <insert id="saveVisitor">
+        INSERT INTO TB_DSD_VISITOR(VISITOR_DT, VISITOR_TOTAL) VALUE (#{vs_dt},#{vs_total})
+    </insert>
+    <update id="updateVisitor">
+        UPDATE TB_DSD_VISITOR
+        SET VISITOR_TOTAL = #{vs_total}
+        WHERE VISITOR_DT = #{vs_dt}
+    </update>
+    <delete id="deleteVisitorByDate">
+        DELETE
+        FROM TB_DSD_VISITOR
+        WHERE VISITOR_SSID != "origin"
+    </delete>
+    <select id="getAllVisitor" resultType="vn.gov.knn.admin.visitor.Visitor" resultMap="VisitorResultMap">
+        SELECT *
+        FROM TB_DSD_VISITOR
+        ORDER BY VISITOR_DT DESC
+    </select>
+    <select id="getLastVisitor" resultType="vn.gov.knn.admin.visitor.Visitor" resultMap="VisitorResultMap">
+        SELECT *
+        FROM TB_DSD_VISITOR
+        ORDER BY VISITOR_DT DESC LIMIT 1
+    </select>
+
+    <select id="getVisitorList" parameterType="vn.gov.knn.admin.visitor.Visitor" resultMap="VisitorResultMap">
+        SELECT *
+        FROM TB_DSD_VISITOR
+        WHERE VISITOR_TOTAL &#62; 0
+        <if test="vs_start_dt != null">
+            AND VISITOR_DT &gt;= #{vs_start_dt}
+        </if>
+        <if test="vs_end_dt != null">
+            AND VISITOR_DT &lt;= #{vs_end_dt}
+        </if>
+    </select>
+</mapper>

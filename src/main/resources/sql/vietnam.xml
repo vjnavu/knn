@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="vn.gov.knn.admin.code.vietnam.VietnamMapper">
+    <resultMap id="VietnamResultMap" type="vn.gov.knn.admin.code.vietnam.Vietnam">
+        <result column="ADDR1_SEQ" property="addr1_seq"/>
+        <result column="ADDR1_ABB" property="addr1_abb"/>
+        <result column="ADDR1_NAME" property="addr1_name"/>
+        <result column="ADDR2_SEQ" property="addr2_seq"/>
+        <result column="ADDR2_DIV" property="addr2_div"/>
+        <result column="ADDR2_NAME" property="addr2_name"/>
+        <result column="ADDR3_SEQ" property="addr3_seq"/>
+        <result column="ADDR3_DIV" property="addr3_div"/>
+        <result column="ADDR3_NAME" property="addr3_name"/>
+    </resultMap>
+
+    <select id="getProvinceList" parameterType="vn.gov.knn.admin.code.vietnam.Vietnam" resultMap="VietnamResultMap">
+        SELECT *
+        FROM TB_DSD_ADDR1
+    </select>
+
+    <select id="getDistrictListByProSeq" parameterType="vn.gov.knn.admin.code.vietnam.Vietnam"
+            resultMap="VietnamResultMap">
+        SELECT *
+        FROM TB_DSD_ADDR2
+        WHERE ADDR1_SEQ = #{value}
+    </select>
+
+    <select id="getCommunesListByProSeq" parameterType="vn.gov.knn.admin.code.vietnam.Vietnam"
+            resultMap="VietnamResultMap">
+        SELECT *
+        FROM TB_DSD_ADDR3
+        WHERE ADDR2_SEQ = #{value}
+    </select>
+
+</mapper>

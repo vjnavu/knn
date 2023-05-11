@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="vn.gov.knn.admin.menu.MenuMapper">
+    <resultMap id="MenuResultMap" type="vn.gov.knn.admin.menu.Menu">
+        <id column="MENU_SEQ" property="mn_seq"/>
+        <result column="MENU_NAME_VN" property="mn_name_vn"/>
+        <result column="MENU_NAME_EN" property="mn_name_en"/>
+        <result column="MENU_LINK" property="mn_link"/>
+        <result column="MENU_SORT" property="mn_sort"/>
+        <result column="MENU_TARGET_BLANK" property="mn_target_blank"/>
+        <result column="MENU_DISPLAY_VN" property="mn_display_vn"/>
+        <result column="MENU_DISPLAY_EN" property="mn_display_en"/>
+        <result column="MENU_TOP" property="mn_top"/>
+        <result column="MENU_REG_DT" property="mn_reg_dt"/>
+        <result column="MENU_MOD_DT" property="mn_mod_dt"/>
+    </resultMap>
+
+    <select id="getMenuBySeq" resultType="vn.gov.knn.admin.menu.Menu" resultMap="MenuResultMap">
+        SELECT *
+        FROM TB_DSD_MENU
+        WHERE MENU_SEQ = #{value}
+    </select>
+
+    <delete id="deleteMenuBySeq">
+        DELETE
+        FROM TB_DSD_MENU
+        WHERE MENU_SEQ = #{value}
+    </delete>
+
+    <update id="updateMenu">
+        UPDATE TB_DSD_MENU
+        SET MENU_NAME_VN = #{mn_name_vn},
+        MENU_NAME_EN = #{mn_name_en},
+        MENU_LINK = #{mn_link},
+        MENU_SORT = #{mn_sort},
+        MENU_TARGET_BLANK = #{mn_target_blank},
+        MENU_DISPLAY_VN = #{mn_display_vn},
+        MENU_DISPLAY_EN = #{mn_display_en},
+        <if test="mn_top != 0 and mn_top != null">
+            MENU_TOP = #{mn_top},
+        </if>
+        MENU_MOD_DT = #{mn_mod_dt}
+        WHERE MENU_SEQ = #{mn_seq}
+    </update>
+
+    <select id="getMenuParent" resultType="vn.gov.knn.admin.menu.Menu" resultMap="MenuResultMap">
+        SELECT *
+        FROM TB_DSD_MENU
+        WHERE MENU_TOP = 0
+        ORDER BY MENU_SORT
+    </select>
+
+    <select id="getMenuSub" resultType="vn.gov.knn.admin.menu.Menu" resultMap="MenuResultMap">
+        SELECT *
+        FROM TB_DSD_MENU
+        WHERE MENU_TOP = #{value}
+        ORDER BY MENU_SORT
+    </select>
+
+    <select id="getListMenuParent" resultType="vn.gov.knn.admin.menu.Menu" resultMap="MenuResultMap">
+        SELECT *
+        FROM TB_DSD_MENU
+        WHERE MENU_TOP = 0
+        ORDER BY MENU_SORT
+    </select>
+    <select id="getListMenuByUrl" resultType="vn.gov.knn.admin.menu.Menu" resultMap="MenuResultMap">
+        SELECT *
+        FROM TB_DSD_MENU
+        WHERE MENU_LINK = #{value}
+    </select>
+    <select id="getListMenuByParent" resultType="vn.gov.knn.admin.menu.Menu" resultMap="MenuResultMap">
+        SELECT *
+        FROM TB_DSD_MENU
+        WHERE MENU_TOP = #{mn_seq}
+    </select>
+    <select id="getListMenuThwart" resultType="vn.gov.knn.admin.menu.Menu" resultMap="MenuResultMap">
+        SELECT *
+        FROM TB_DSD_MENU
+        WHERE MENU_TOP = #{mn_top}
+    </select>
+    <select id="getMenuByUrl" resultType="vn.gov.knn.admin.menu.Menu" resultMap="MenuResultMap">
+        SELECT *
+        FROM TB_DSD_MENU
+        WHERE MENU_LINK = #{value}
+    </select>
+
+    <insert id="saveMenu" parameterType="Menu">
+        INSERT INTO TB_DSD_MENU (MENU_NAME_VN, MENU_NAME_EN, MENU_LINK, MENU_SORT, MENU_TARGET_BLANK, MENU_DISPLAY_VN,
+                                 MENU_DISPLAY_EN, MENU_TOP, MENU_REG_DT)
+        VALUES (#{mn_name_vn}, #{mn_name_en}, #{mn_link}, #{mn_sort}, #{mn_target_blank}, #{mn_display_vn},
+                #{mn_display_en}, #{mn_top}, #{mn_reg_dt})
+    </insert>
+
+</mapper>

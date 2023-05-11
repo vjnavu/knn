@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="vn.gov.knn.admin.role.RoleMapper">
+    <resultMap id="RoleResultMap" type="vn.gov.knn.admin.role.Role">
+        <id column="ROLE_SEQ" property="role_seq"/>
+        <result column="ROLE_TOP" property="role_top"/>
+        <result column="ROLE_NAME" property="role_name"/>
+        <result column="ROLE_URL" property="role_url"/>
+        <result column="ROLE_SORT" property="role_sort"/>
+        <result column="ROLE_ADMIN_YN" property="role_admin_yn"/>
+        <result column="ROLE_DSD_YN" property="role_dsd_yn"/>
+        <result column="ROLE_NSAO_YN" property="role_nsao_yn"/>
+        <result column="ROLE_ICON" property="role_icon"/>
+
+        <result column="role_name_top" property="role_name_top"/>
+        <result column="role_save" property="role_save"/>
+    </resultMap>
+
+    <select id="getListRole" resultMap="RoleResultMap">
+        SELECT c.ROLE_SEQ,
+               c.ROLE_TOP,
+               c.ROLE_NAME,
+               c.ROLE_URL,
+               c.ROLE_SORT,
+               c.ROLE_DSD_YN,
+               c.ROLE_NSAO_YN,
+               d.ROLE_NAME AS role_name_top
+        FROM TB_DSD_ROLE c
+                 LEFT JOIN TB_DSD_ROLE d ON c.ROLE_TOP = d.ROLE_SEQ
+    </select>
+
+    <select id="getRoleC1" resultMap="RoleResultMap">
+        SELECT *
+        FROM TB_DSD_ROLE
+        WHERE ROLE_TOP = 0
+        ORDER BY ROLE_SORT
+    </select>
+
+    <select id="getRoleByRoleC1" resultMap="RoleResultMap">
+        SELECT *
+        FROM TB_DSD_ROLE
+        WHERE ROLE_TOP = #{value}
+        ORDER BY ROLE_SORT
+    </select>
+    <select id="getUrlAdmin" resultType="java.lang.String">
+        SELECT ROLE_URL
+        FROM TB_DSD_ROLE
+        WHERE ROLE_ADMIN_YN = 'Y'
+    </select>
+
+    <select id="getUrlDSD" resultType="java.lang.String">
+        SELECT ROLE_URL
+        FROM TB_DSD_ROLE
+        WHERE ROLE_DSD_YN = 'Y'
+    </select>
+
+    <select id="getUrlNSAO" resultType="java.lang.String">
+        SELECT ROLE_URL
+        FROM TB_DSD_ROLE
+        WHERE ROLE_NSAO_YN = 'Y'
+    </select>
+    <select id="getRoleC1ByRole" resultType="vn.gov.knn.admin.role.Role">
+        SELECT *
+        FROM TB_DSD_ROLE
+        WHERE ROLE_TOP = 0
+        <if test="role_save == 1">
+            AND ROLE_ADMIN_YN = 'Y'
+        </if>
+        <if test="role_save == 2">
+            AND ROLE_DSD_YN = 'Y'
+        </if>
+        <if test="role_save == 3">
+            AND ROLE_NSAO_YN = 'Y'
+        </if>
+        ORDER BY ROLE_SORT
+    </select>
+    <select id="getRoleC2ByRoleUser" resultType="vn.gov.knn.admin.role.Role">
+        SELECT *
+        FROM TB_DSD_ROLE
+        WHERE ROLE_TOP = #{role_seq}
+        <if test="role_save == 1">
+            AND ROLE_ADMIN_YN = 'Y'
+        </if>
+        <if test="role_save == 2">
+            AND ROLE_DSD_YN = 'Y'
+        </if>
+        <if test="role_save == 3">
+            AND ROLE_NSAO_YN = 'Y'
+        </if>
+        ORDER BY ROLE_SORT
+    </select>
+    <select id="getListRoleC2" resultType="vn.gov.knn.admin.role.Role">
+        SELECT *
+        FROM TB_DSD_ROLE
+        WHERE ROLE_TOP != 0
+    </select>
+
+    <update id="updateRole">
+        UPDATE TB_DSD_ROLE
+        SET ROLE_DSD_YN  = #{role_dsd_yn},
+            ROLE_NSAO_YN = #{role_nsao_yn}
+        WHERE ROLE_SEQ = #{role_seq}
+    </update>
+</mapper>

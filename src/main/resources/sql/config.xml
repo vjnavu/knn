@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="vn.gov.knn.admin.config.ConfigMapper">
+    <resultMap id="configResultMap" type="vn.gov.knn.admin.config.Config">
+        <result column="CONFIG_LOGO" property="config_logo"/>
+        <result column="CONFIG_SITE_TITLE" property="config_site_title"/>
+        <result column="CONFIG_HOME_URL" property="config_home_url"/>
+        <result column="CONFIG_ADMIN_URL" property="config_admin_url"/>
+        <result column="CONFIG_EMAIL" property="config_email"/>
+        <result column="CONFIG_PHONE" property="config_phone"/>
+        <result column="CONFIG_FAX" property="config_fax"/>
+        <result column="CONFIG_ADDR" property="config_addr"/>
+        <result column="CONFIG_BLOCK_WORD" property="config_block_word"/>
+
+        <result column="config_logo_uuid" property="config_logo_uuid"/>
+    </resultMap>
+
+    <select id="getConfig" parameterType="vn.gov.knn.admin.config.Config" resultMap="configResultMap">
+        select *, TB_DSD_FILE.file_uuid as config_logo_uuid
+        from TB_DSD_CONFIG
+                 left join TB_DSD_FILE on TB_DSD_CONFIG.CONFIG_LOGO = TB_DSD_FILE.file_seq
+    </select>
+
+    <update id="updateConfig" parameterType="vn.gov.knn.admin.config.Config">
+        UPDATE TB_DSD_CONFIG
+        SET
+        <if test="config_logo != null">
+            CONFIG_LOGO=#{config_logo},
+        </if>
+        CONFIG_SITE_TITLE=#{config_site_title},
+        CONFIG_HOME_URL=#{config_home_url},
+        CONFIG_ADMIN_URL=#{config_admin_url},
+        CONFIG_EMAIL=#{config_email},
+        CONFIG_PHONE=#{config_phone},
+        CONFIG_FAX=#{config_fax},
+        CONFIG_ADDR=#{config_addr},
+        CONFIG_BLOCK_WORD=#{config_block_word}
+
+    </update>
+</mapper>

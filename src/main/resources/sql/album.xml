@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="vn.gov.knn.admin.album.AlbumMapper">
+    <resultMap id="AlbumResultMap" type="Album">
+        <id column="ALBUM_SEQ" property="album_seq"/>
+        <result column="ALBUM_NAME" property="album_name"/>
+        <result column="ALBUM_IMG" property="album_img"/>
+        <result column="EXAM_SEQ" property="exam_seq"/>
+        <result column="ALBUM_REG_DT" property="album_regis"/>
+        <result column="ALBUM_MOD_DT" property="album_mod_dt"/>
+
+        <result column="exam_name" property="exam_name"/>
+    </resultMap>
+
+    <sql id="selectWhereCondition">
+        <if test="keyWord != null and keyWord != ''">
+            WHERE (UPPER(ALBUM_NAME) LIKE UPPER(CONCAT("%",TRIM(#{keyWord}),"%")))
+        </if>
+    </sql>
+    <insert id="saveNewAlbum">
+        INSERT INTO TB_DSD_ALBUM(ALBUM_NAME, EXAM_SEQ, ALBUM_IMG, ALBUM_REG_DT) VALUE (#{album_name},#{exam_seq} ,#{album_img}, #{album_regis})
+    </insert>
+    <update id="updateSave">
+        UPDATE TB_DSD_ALBUM
+        SET ALBUM_NAME   = #{album_name},
+            EXAM_SEQ     = #{exam_seq},
+            ALBUM_IMG    = #{album_img},
+            ALBUM_MOD_DT = #{album_mod_dt}
+        WHERE ALBUM_SEQ = #{album_seq}
+    </update>
+    <delete id="deleteAlbum">
+        DELETE
+        FROM TB_DSD_ALBUM
+        WHERE TB_DSD_ALBUM.ALBUM_SEQ = #{value}
+    </delete>
+    <select id="getListAlbum" resultType="vn.gov.knn.admin.album.Album" resultMap="AlbumResultMap">
+        SELECT * FROM (
+        SELECT
+        (@row_number := @row_number + 1) AS RN, ALBUM_SEQ,
+        ALBUM_NAME, ALBUM_REG_DT, ALBUM_IMG,
+        TB_DSD_EXAM.exam_name as exam_name,ALBUM_MOD_DT
+        FROM TB_DSD_ALBUM LEFT JOIN TB_DSD_EXAM ON TB_DSD_EXAM.EXAM_SEQ = TB_DSD_ALBUM.EXAM_SEQ,
+        (SELECT @row_number := 0) AS RN
+        <include refid="selectWhereCondition"></include>
+        ORDER BY ALBUM_REG_DT DESC
+        ) a
+        LIMIT #{size} OFFSET #{offset}
+    </select>
+
+    <select id="countAlbum" resultType="java.lang.Integer">
+        SELECT COUNT(*)
+        FROM TB_DSD_ALBUM
+        <include refid="selectWhereCondition"></include>
+    </select>
+    <select id="getAlbumBySeq" resultType="vn.gov.knn.admin.album.Album">
+        SELECT *
+        FROM TB_DSD_ALBUM
+        WHERE ALBUM_SEQ = #{value}
+    </select>
+    <select id="getAlbumsByExamSeq" resultType="vn.gov.knn.admin.album.Album">
+        SELECT *
+        FROM TB_DSD_ALBUM
+        WHERE EXAM_SEQ = #{value}
+    </select>
+
+    <select id="getAllAlbum" resultType="vn.gov.knn.admin.album.Album" resultMap="AlbumResultMap">
+        SELECT *
+        FROM (SELECT (@row_number := @row_number + 1) AS RN,
+        ALBUM_SEQ,
+        ALBUM_NAME,
+        ALBUM_IMG,
+        ALBUM_REG_DT
+        FROM TB_DSD_ALBUM,
+        (SELECT @row_number := 0) AS RN
+        <include refid="selectWhereCondition"></include>
+        ORDER BY ALBUM_REG_DT DESC) a
+        LIMIT #{size} OFFSET #{offset}
+    </select>
+
+    <select id="getAlbumByLimit" resultType="vn.gov.knn.admin.album.Album" resultMap="AlbumResultMap">
+        SELECT ALBUM_SEQ,
+               ALBUM_NAME,
+               ALBUM_IMG
+        FROM TB_DSD_ALBUM
+        ORDER BY ALBUM_REG_DT DESC
+        LIMIT #{value}
+    </select>
+</mapper>

@@ -1,0 +1,130 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="vn.gov.knn.admin.exam.ExamMapper">
+    <resultMap id="ExamResultMap" type="Exam">
+        <id column="EXAM_SEQ" property="exam_seq"/>
+        <result column="EXAM_NAME" property="exam_name"/>
+        <result column="EXAM_TYPE" property="exam_type"/>
+        <result column="EXAM_LOGO" property="exam_logo"/>
+        <result column="EXAM_DESC" property="exam_desc"/>
+        <result column="EXAM_PLACE" property="exam_place"/>
+        <result column="EXAM_START_DT" property="exam_start_dt"/>
+        <result column="EXAM_END_DT" property="exam_end_dt"/>
+        <result column="EXAM_CERT" property="exam_cert"/>
+        <result column="EXAM_CANDI" property="exam_candi"/>
+        <result column="EXAM_DISPLAY" property="exam_display"/>
+        <result column="EXAM_REGIS" property="exam_regis"/>
+        <result column="EXAM_MOD_DT" property="exam_mod_dt"/>
+
+        <result column="exam_logo_uuid" property="exam_logo_uuid"/>
+        <result column="exam_candi_uuid" property="exam_candi_uuid"/>
+        <result column="candi_name" property="candi_name"/>
+    </resultMap>
+
+    <sql id="selectWhereCondition">
+        <if test="keyWord != null and keyWord != ''">
+            <if test="exam_type != null">
+                AND (UPPER(EXAM_NAME) LIKE UPPER(CONCAT("%",TRIM(#{keyWord}),"%")))
+            </if>
+            <if test="exam_type == null">
+                WHERE (UPPER(EXAM_NAME) LIKE UPPER(CONCAT("%",TRIM(#{keyWord}),"%")))
+            </if>
+
+        </if>
+    </sql>
+    <insert id="saveNewExam">
+        INSERT INTO TB_DSD_EXAM(EXAM_NAME, EXAM_TYPE, EXAM_LOGO, EXAM_DESC, EXAM_PLACE, EXAM_START_DT, EXAM_END_DT,
+                                EXAM_CERT, EXAM_CANDI, EXAM_DISPLAY, EXAM_REGIS) VALUE (#{exam_name},#{exam_type},#{exam_logo},#{exam_desc},#{exam_place}
+            ,#{exam_start_dt},#{exam_end_dt},#{exam_cert},#{exam_candi},#{exam_display},#{exam_regis})
+    </insert>
+    <update id="updateExam">
+        UPDATE TB_DSD_EXAM
+        SET EXAM_NAME     = #{exam_name},
+            EXAM_TYPE     = #{exam_type},
+            EXAM_LOGO     = #{exam_logo},
+            EXAM_DESC     = #{exam_desc},
+            EXAM_START_DT = #{exam_start_dt},
+            EXAM_END_DT   = #{exam_end_dt},
+            EXAM_CERT     = #{exam_cert},
+            EXAM_PLACE    = #{exam_place},
+            EXAM_CANDI    = #{exam_candi},
+            EXAM_DISPLAY  = #{exam_display},
+            EXAM_MOD_DT   = #{exam_mod_dt}
+        WHERE EXAM_SEQ = #{exam_seq}
+    </update>
+    <delete id="deleteExam">
+        DELETE
+        FROM TB_DSD_EXAM
+        WHERE TB_DSD_EXAM.EXAM_SEQ = #{value}
+    </delete>
+
+    <select id="getListExam" resultType="vn.gov.knn.admin.exam.Exam" resultMap="ExamResultMap">
+        SELECT * FROM (
+        SELECT
+        (@row_number := @row_number + 1) AS RN,EXAM_SEQ,
+        EXAM_NAME,EXAM_TYPE,EXAM_PLACE,EXAM_START_DT,EXAM_END_DT,EXAM_DESC,EXAM_DISPLAY,EXAM_REGIS,TB_DSD_FILE.FILE_UUID
+        AS
+        exam_logo_uuid
+        FROM (SELECT @row_number := 0) AS RN,TB_DSD_EXAM LEFT JOIN TB_DSD_FILE ON TB_DSD_EXAM.EXAM_LOGO =
+        TB_DSD_FILE.FILE_SEQ
+        <include refid="selectWhereCondition"></include>
+        ORDER BY EXAM_REGIS DESC
+        ) a
+        LIMIT #{size} OFFSET #{offset}
+    </select>
+    <select id="countExam" resultType="java.lang.Integer">
+        SELECT COUNT(*)
+        FROM TB_DSD_EXAM
+        <if test="exam_type != null">
+            WHERE
+            UPPER(EXAM_TYPE) = UPPER(#{exam_type}) AND
+            EXAM_DISPLAY = 'Y'
+        </if>
+        <include refid="selectWhereCondition"></include>
+    </select>
+    <select id="getExamBySeq" resultType="vn.gov.knn.admin.exam.Exam">
+        SELECT *, c.FILE_UUID as exam_logo_uuid, d.FILE_UUID as exam_candi_uuid, d.FILE_NAME as candi_name
+        FROM TB_DSD_EXAM
+                 LEFT JOIN TB_DSD_FILE c ON TB_DSD_EXAM.EXAM_LOGO = c.FILE_SEQ
+                 LEFT JOIN TB_DSD_FILE d ON TB_DSD_EXAM.EXAM_CANDI = d.FILE_SEQ
+        WHERE EXAM_SEQ = #{value}
+    </select>
+    <select id="getAllExam" resultType="vn.gov.knn.admin.exam.Exam">
+        SELECT *
+        FROM TB_DSD_EXAM
+    </select>
+    <sql id="selectWhereConditionUser">
+        <if test="keyWord != null and keyWord != ''">
+            AND (UPPER(EXAM_NAME) LIKE UPPER(CONCAT("%",TRIM(#{keyWord}),"%"))
+            OR UPPER(EXAM_DESC) LIKE UPPER(CONCAT("%",TRIM(#{keyWord}),"%"))
+            OR UPPER(EXAM_PLACE) LIKE UPPER(CONCAT("%",TRIM(#{keyWord}),"%")))
+        </if>
+    </sql>
+    <select id="getListExamByExamType" resultType="vn.gov.knn.admin.exam.Exam">
+        SELECT *
+        FROM (SELECT (@row_number := @row_number + 1) AS RN,
+        EXAM_SEQ,
+        EXAM_NAME,
+        EXAM_TYPE,
+        EXAM_PLACE,
+        EXAM_START_DT,
+        EXAM_END_DT,
+        EXAM_DESC,
+        EXAM_DISPLAY,
+        EXAM_REGIS,
+        TB_DSD_FILE.FILE_UUID AS exam_logo_uuid FROM (SELECT @row_number := 0) AS RN, TB_DSD_EXAM LEFT JOIN TB_DSD_FILE
+        ON TB_DSD_EXAM.EXAM_LOGO = TB_DSD_FILE.FILE_SEQ
+        WHERE UPPER(EXAM_TYPE) = UPPER(#{exam_type}) AND EXAM_DISPLAY = 'Y'
+        <include refid="selectWhereConditionUser"></include>
+        ORDER BY EXAM_REGIS DESC
+        ) a
+        LIMIT #{size} OFFSET #{offset}
+    </select>
+    <select id="getExamByLimit" resultType="vn.gov.knn.admin.exam.Exam">
+        SELECT *
+        FROM TB_DSD_EXAM
+        WHERE EXAM_DISPLAY = "Y"
+          AND EXAM_TYPE = #{type}
+        ORDER BY EXAM_REGIS DESC LIMIT #{limit}
+    </select>
+</mapper>

@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="vn.gov.knn.admin.file.FileMapper">
+    <resultMap id="FileResultMap" type="FileVO">
+        <result column="FILE_SEQ" property="file_seq"/>
+        <result column="FILE_UUID" property="file_uuid"/>
+        <result column="FILE_NAME" property="file_name"/>
+        <result column="FILE_EXT" property="file_ext"/>
+        <result column="FILE_TYPE" property="file_type"/>
+        <result column="FILE_PATH" property="file_path"/>
+        <result column="FILE_SIZE" property="file_size"/>
+        <result column="FILE_REG_DT" property="file_reg_dtm"/>
+        <result column="POST_SEQ" property="post_seq"/>
+    </resultMap>
+    <insert id="saveFile" parameterType="FileVO">
+        INSERT INTO TB_DSD_FILE (FILE_UUID, FILE_NAME, FILE_EXT, FILE_TYPE, FILE_PATH, FILE_SIZE, FILE_REG_DT,
+        POST_SEQ)
+        VALUES (#{file_uuid}, #{file_name}, #{file_ext}, #{file_type}, #{file_path}, #{file_size},
+        #{file_reg_dtm}, #{post_seq})
+        <selectKey resultType="integer" keyProperty="file_seq" order="AFTER">SELECT LAST_INSERT_ID()</selectKey>
+    </insert>
+
+    <select id="getFileBySeq" parameterType="FileVO" resultMap="FileResultMap">
+        SELECT *
+        FROM TB_DSD_FILE
+        WHERE FILE_SEQ = #{value}
+    </select>
+    <select id="getFileByUuid" parameterType="FileVO" resultMap="FileResultMap">
+        SELECT *
+        FROM TB_DSD_FILE
+        WHERE FILE_UUID = #{value}
+    </select>
+
+    <delete id="deleteFileByUuid" parameterType="FileVO">
+        DELETE
+        FROM TB_DSD_FILE
+        WHERE FILE_UUID = #{value}
+    </delete>
+
+    <select id="getListFileByPostSeq" parameterType="FileVO" resultMap="FileResultMap">
+        SELECT *
+        FROM TB_DSD_FILE
+        WHERE POST_SEQ = #{value}
+    </select>
+    <select id="getUUIDFileBySeq" resultType="vn.gov.knn.admin.file.FileVO">
+        SELECT FILE_UUID
+        FROM TB_DSD_FILE
+        WHERE FILE_SEQ = #{value}
+    </select>
+</mapper>

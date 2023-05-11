@@ -1,0 +1,187 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="vn.gov.knn.admin.agency.AgencyMapper">
+    <resultMap id="AgencyResultMap" type="vn.gov.knn.admin.agency.Agency">
+        <id column="AGENCY_SEQ" property="ag_seq"/>
+        <result column="AGENCY_NAME_VN" property="ag_name_vn"/>
+        <result column="AGENCY_NAME_EN" property="ag_name_en"/>
+        <result column="AGENCY_ADDR1" property="ag_addr1"/>
+        <result column="AGENCY_ADDR2" property="ag_addr2"/>
+        <result column="AGENCY_ADDR3" property="ag_addr3"/>
+        <result column="AGENCY_ADDR" property="ag_addr"/>
+        <result column="AGENCY_LOGO" property="ag_logo"/>
+        <result column="AGENCY_WEB" property="ag_web"/>
+        <result column="AGENCY_EMAIL" property="ag_email"/>
+        <result column="AGENCY_PHONE" property="ag_phone"/>
+        <result column="AGENCY_FAX" property="ag_fax"/>
+        <result column="AGENCY_ACTI" property="ag_acti"/>
+        <result column="AGENCY_MEMO" property="ag_memo"/>
+
+        <result column="addr1_name" property="addr1_name"/>
+        <result column="addr2_name" property="addr2_name"/>
+        <result column="addr3_name" property="addr3_name"/>
+        <result column="ag_logo_file_uuid" property="ag_logo_file_uuid"/>
+    </resultMap>
+
+    <sql id="selectWhereCondition">
+        <if test="keyWord != null and keyWord != ''">
+            WHERE
+            <if test="(ag_seq != 0 and ag_seq != null) || (ag_addr1 != 0 and ag_addr1 != null)">
+                AGENCY_ADDR1 = #{ag_addr1} AND
+            </if>
+            <if test="ag_acti != null and ag_acti != ''">
+                AGENCY_ACTI = #{ag_acti} AND
+            </if>
+            <choose>
+                <when test="searchItem != null and searchItem != ''">
+                    <choose>
+                        <when test="searchItem == 'ag_name_vn'">
+                            UPPER (AGENCY_NAME_VN) LIKE UPPER (CONCAT("%",TRIM(#{keyWord}),"%"))
+                        </when>
+                        <when test="searchItem == 'ag_name_en'">
+                            UPPER (AGENCY_NAME_EN) LIKE UPPER (CONCAT("%",TRIM(#{keyWord}),"%"))
+                        </when>
+                    </choose>
+                </when>
+                <otherwise>
+                    (
+                    UPPER(AGENCY_NAME_VN) LIKE UPPER(CONCAT("%",TRIM(#{keyWord}),"%"))
+                    OR UPPER(AGENCY_NAME_EN) LIKE UPPER(CONCAT("%",TRIM(#{keyWord}),"%"))
+                    )
+                </otherwise>
+            </choose>
+        </if>
+        <if test="(keyWord == null or keyWord == '') and ag_addr1 != 0 and ag_addr1 != null">
+            WHERE AGENCY_ADDR1 = #{ag_addr1}
+            <if test="ag_acti != null and ag_acti != ''">
+                AND AGENCY_ACTI = #{ag_acti}
+            </if>
+        </if>
+        <if test="(keyWord == null or keyWord == '') and (ag_acti != null and ag_acti != '')">
+            WHERE AGENCY_ACTI = #{ag_acti}
+        </if>
+    </sql>
+
+    <select id="getAgencyList" parameterType="vn.gov.knn.admin.agency.Agency" resultMap="AgencyResultMap">
+        SELECT * FROM (
+        SELECT
+        (@row_number := @row_number + 1) AS RN,
+        AGENCY_SEQ,AGENCY_NAME_VN,AGENCY_NAME_EN,AGENCY_WEB,AGENCY_EMAIL,AGENCY_PHONE,AGENCY_FAX,AGENCY_ACTI,AGENCY_MEMO,
+        TB_DSD_FILE.file_uuid as ag_logo_file_uuid,
+        TB_DSD_ADDR1.ADDR1_NAME as addr1_name,
+        CONCAT(TB_DSD_ADDR2.ADDR2_DIV,' ',TB_DSD_ADDR2.ADDR2_NAME) as addr2_name,
+        CONCAT(TB_DSD_ADDR3.ADDR3_DIV,' ',TB_DSD_ADDR3.ADDR3_NAME) as addr3_name,
+        AGENCY_ADDR
+        FROM TB_DSD_AGENCY
+        LEFT OUTER JOIN TB_DSD_FILE ON TB_DSD_AGENCY.AGENCY_LOGO = TB_DSD_FILE.file_seq
+        LEFT OUTER JOIN TB_DSD_ADDR1 ON TB_DSD_AGENCY.AGENCY_ADDR1 = TB_DSD_ADDR1.ADDR1_SEQ
+        LEFT OUTER JOIN TB_DSD_ADDR2 ON TB_DSD_AGENCY.AGENCY_ADDR2 = TB_DSD_ADDR2.ADDR2_SEQ
+        LEFT OUTER JOIN TB_DSD_ADDR3 ON TB_DSD_AGENCY.AGENCY_ADDR3 = TB_DSD_ADDR3.ADDR3_SEQ,
+        (SELECT @row_number := 0) AS RN
+        <include refid="selectWhereCondition"></include>
+        ORDER BY
+        <choose>
+            <when test="order != null and order != '' and sort != null and sort != ''">
+                <choose>
+                    <when test="order == 'ag_name_vn'">AGENCY_NAME_VN</when>
+                    <when test="order == 'ag_name_en'">AGENCY_NAME_EN</when>
+                    <otherwise>AGENCY_SEQ ASC</otherwise>
+                </choose>
+                <choose>
+                    <when test="sort == 'ASC'">ASC</when>
+                    <when test="sort == 'DESC'">DESC</when>
+                </choose>
+            </when>
+            <otherwise>AGENCY_SEQ DESC</otherwise>
+        </choose>
+        ) a
+        WHERE (
+        RN BETWEEN #{startRow} AND #{endRow}
+        )
+    </select>
+
+    <select id="countAgency" parameterType="vn.gov.knn.admin.agency.Agency" resultType="java.lang.Integer">
+        SELECT COUNT(*) FROM TB_DSD_AGENCY
+        <include refid="selectWhereCondition"></include>
+    </select>
+    <select id="getAllAgency" resultMap="AgencyResultMap">
+        SELECT *, TB_DSD_FILE.file_uuid AS ag_logo_file_uuid
+        FROM TB_DSD_AGENCY
+                 LEFT JOIN TB_DSD_FILE on TB_DSD_FILE.file_seq = TB_DSD_AGENCY.AGENCY_LOGO
+    </select>
+
+    <insert id="saveNewAgency" parameterType="vn.gov.knn.admin.agency.Agency">
+        INSERT INTO TB_DSD_AGENCY( AGENCY_NAME_VN, AGENCY_NAME_EN, AGENCY_ADDR1, AGENCY_ADDR2
+                                 , AGENCY_ADDR3, AGENCY_ADDR, AGENCY_LOGO
+                                 , AGENCY_WEB, AGENCY_EMAIL, AGENCY_PHONE, AGENCY_FAX, AGENCY_ACTI, AGENCY_MEMO)
+        VALUES ( #{ag_name_vn}, #{ag_name_en}, #{ag_addr1}, #{ag_addr2}
+               , #{ag_addr3}, #{ag_addr}, #{ag_logo}
+               , #{ag_web}, #{ag_email}, #{ag_phone}, #{ag_fax}, #{ag_acti}, #{ag_memo})
+    </insert>
+    <select id="getAgencyBySeq" parameterType="vn.gov.knn.admin.agency.Agency" resultMap="AgencyResultMap">
+        SELECT AGENCY_SEQ,
+               AGENCY_NAME_VN,
+               AGENCY_NAME_EN,
+               AGENCY_WEB,
+               AGENCY_EMAIL,
+               AGENCY_PHONE,
+               AGENCY_FAX,
+               AGENCY_ACTI,
+               AGENCY_MEMO,
+               TB_DSD_FILE.FILE_UUID   as ag_logo_file_uuid,
+               AGENCY_LOGO,
+               AGENCY_ADDR1,
+               AGENCY_ADDR2,
+               AGENCY_ADDR3,
+               TB_DSD_ADDR1.ADDR1_NAME as addr1_name,
+               TB_DSD_ADDR2.ADDR2_NAME as addr2_name,
+               TB_DSD_ADDR3.ADDR3_NAME as addr3_name,
+               AGENCY_ADDR
+        FROM TB_DSD_AGENCY
+                 LEFT OUTER JOIN TB_DSD_FILE ON TB_DSD_AGENCY.AGENCY_LOGO = TB_DSD_FILE.FILE_SEQ
+                 LEFT OUTER JOIN TB_DSD_ADDR1 ON TB_DSD_AGENCY.AGENCY_ADDR1 = TB_DSD_ADDR1.ADDR1_SEQ
+                 LEFT OUTER JOIN TB_DSD_ADDR2 ON TB_DSD_AGENCY.AGENCY_ADDR2 = TB_DSD_ADDR2.ADDR2_SEQ
+                 LEFT OUTER JOIN TB_DSD_ADDR3 ON TB_DSD_AGENCY.AGENCY_ADDR3 = TB_DSD_ADDR3.ADDR3_SEQ
+        WHERE AGENCY_SEQ = #{value}
+    </select>
+    <select id="getAgencyByLimit" resultType="vn.gov.knn.admin.agency.Agency" resultMap="AgencyResultMap">
+        SELECT *, TB_DSD_FILE.FILE_UUID as ag_logo_file_uuid
+        FROM TB_DSD_AGENCY
+                 LEFT JOIN TB_DSD_FILE ON TB_DSD_AGENCY.AGENCY_LOGO = TB_DSD_FILE.FILE_SEQ
+        WHERE AGENCY_ACTI = "Y"
+        ORDER BY RAND() LIMIT #{value}
+    </select>
+    <select id="countTotalAgency" resultType="java.lang.Integer">
+        SELECT COUNT(*)
+        FROM TB_DSD_AGENCY
+    </select>
+    <select id="countActiveAgency" resultType="java.lang.Integer">
+        SELECT COUNT(*)
+        FROM TB_DSD_AGENCY
+        WHERE AGENCY_ACTI = "Y"
+    </select>
+
+    <update id="updateAgency" parameterType="vn.gov.knn.admin.agency.Agency">
+        UPDATE TB_DSD_AGENCY
+        SET AGENCY_NAME_VN = #{ag_name_vn},
+            AGENCY_NAME_EN = #{ag_name_en},
+            AGENCY_LOGO    = #{ag_logo},
+            AGENCY_ADDR1   = #{ag_addr1},
+            AGENCY_ADDR2   = #{ag_addr2},
+            AGENCY_ADDR3   = #{ag_addr3},
+            AGENCY_ADDR    = #{ag_addr},
+            AGENCY_PHONE   = #{ag_phone},
+            AGENCY_FAX     = #{ag_fax},
+            AGENCY_WEB     = #{ag_web},
+            AGENCY_EMAIL   = #{ag_email},
+            AGENCY_ACTI    = #{ag_acti},
+            AGENCY_MEMO    = #{ag_memo}
+        WHERE AGENCY_SEQ = #{ag_seq}
+    </update>
+
+    <delete id="deleteAgency" parameterType="vn.gov.knn.admin.agency.Agency">
+        DELETE
+        FROM TB_DSD_AGENCY
+        WHERE AGENCY_SEQ = #{value}
+    </delete>
+</mapper>

@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE configuration PUBLIC "-//mybatis.org//DTD Config 3.0//EN" "http://mybatis.org/dtd/mybatis-3-config.dtd">
+<configuration>
+<!--    <settings>
+        <setting name="logImpl" value="STDOUT_LOGGING"/>
+    </settings>-->
+    <typeAliases>
+        <package name="vn.gov.knn.admin"/>
+    </typeAliases>
+    <mappers>
+        <mapper resource="sql/agency.xml"/>
+        <mapper resource="sql/board.xml"/>
+        <mapper resource="sql/code.xml"/>
+        <mapper resource="sql/content.xml"/>
+        <mapper resource="sql/countView.xml"/>
+        <mapper resource="sql/file.xml"/>
+        <mapper resource="sql/layout.xml"/>
+        <mapper resource="sql/login.xml"/>
+        <mapper resource="sql/menu.xml"/>
+        <mapper resource="sql/post.xml"/>
+        <mapper resource="sql/config.xml"/>
+        <mapper resource="sql/admin.xml"/>
+        <mapper resource="sql/vietnam.xml"/>
+        <mapper resource="sql/cert1.xml"/>
+        <mapper resource="sql/cert2.xml"/>
+        <mapper resource="sql/cert3.xml"/>
+        <mapper resource="sql/role.xml"/>
+        <mapper resource="sql/qa.xml"/>
+        <mapper resource="sql/visitor.xml"/>
+        <mapper resource="sql/candidate.xml"/>
+        <mapper resource="sql/exam.xml"/>
+        <mapper resource="sql/album.xml"/>
+        <mapper resource="sql/search.xml"/>
+    </mappers>
+</configuration>

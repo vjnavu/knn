@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="vn.gov.knn.admin.board.qa.QAMapper">
+    <resultMap id="qaResultMap" type="vn.gov.knn.admin.board.qa.QA">
+        <id column="QA_SEQ" property="qa_seq"/>
+        <result column="QA_TITLE" property="qa_title"/>
+        <result column="QA_EMAIL" property="qa_email"/>
+        <result column="QA_QUESTION" property="qa_question"/>
+        <result column="QA_ANSWER_ADM" property="qa_answer_adm"/>
+        <result column="QA_ANSWER" property="qa_answer"/>
+        <result column="QA_QUESTION_DT" property="qa_question_dt"/>
+        <result column="QA_ANSWER_DT" property="qa_answer_dt"/>
+        <result column="QA_TYPE" property="qa_type"/>
+        <result column="QA_PASSWORD" property="qa_password"/>
+
+        <result column="admin_email" property="admin_email"/>
+    </resultMap>
+    <sql id="selectWhereCondition">
+        <if test="keyWord != null and keyWord != ''">
+            <choose>
+                <when test="searchItem != null and searchItem != ''">
+                    <choose>
+                        <when test="searchItem == 'qa_question'">
+                            WHERE UPPER(QA_QUESTION) LIKE UPPER(CONCAT("%",TRIM(#{keyWord}),"%"))
+                        </when>
+                    </choose>
+                </when>
+                <otherwise>
+                    WHERE UPPER(QA_QUESTION) LIKE UPPER(CONCAT("%",TRIM(#{keyWord}),"%"))
+                    OR UPPER(QA_TITLE) LIKE UPPER(CONCAT("%",TRIM(#{keyWord}),"%"))
+                </otherwise>
+            </choose>
+        </if>
+    </sql>
+    <insert id="saveNewQA">
+        INSERT INTO TB_DSD_QA
+            (QA_TITLE, QA_EMAIL, QA_QUESTION, QA_QUESTION_DT, QA_TYPE, QA_PASSWORD) VALUE
+            (#{qa_title},#{qa_email},#{qa_question},#{qa_question_dt}, #{qa_type}, #{qa_password})
+    </insert>
+    <update id="updateQA">
+        UPDATE TB_DSD_QA
+        SET QA_ANSWER     = #{qa_answer},
+            QA_ANSWER_ADM = #{qa_answer_adm},
+            QA_ANSWER_DT  = #{qa_answer_dt}
+        WHERE QA_SEQ = #{qa_seq}
+    </update>
+    <update id="userUpdateQA">
+        UPDATE TB_DSD_QA
+        SET QA_TITLE    = #{qa_title},
+            QA_QUESTION = #{qa_question}
+        WHERE QA_SEQ = #{qa_seq}
+    </update>
+
+    <delete id="deleteQa">
+        DELETE
+        FROM TB_DSD_QA
+        WHERE QA_SEQ = #{value}
+    </delete>
+
+    <select id="getListQa" resultType="vn.gov.knn.admin.board.qa.QA">
+        SELECT * FROM (
+        SELECT
+        (@row_number := @row_number + 1) AS RN,
+        QA_SEQ, QA_TITLE, QA_EMAIL,QA_QUESTION,QA_QUESTION_DT,QA_ANSWER_DT, QA_TYPE, QA_PASSWORD
+        FROM TB_DSD_QA, (SELECT @row_number := 0) AS RN
+        <include refid="selectWhereCondition"></include>
+        ORDER BY
+        <if test="qa_answer_dt != null">
+            QA_ANSWER_DT DESC
+        </if>
+        <if test="qa_answer_dt == null">
+            QA_QUESTION_DT DESC
+        </if>
+        ) a
+        LIMIT #{size} OFFSET #{offset}
+    </select>
+    <select id="countQA" resultType="java.lang.Integer">
+        SELECT COUNT(*) FROM TB_DSD_QA
+        <include refid="selectWhereCondition"></include>
+    </select>
+    <select id="getQABySeq" resultType="vn.gov.knn.admin.board.qa.QA">
+        SELECT *, TB_DSD_ADMIN.ADMIN_EMAIL AS admin_email
+        FROM TB_DSD_QA
+                 LEFT JOIN TB_DSD_ADMIN ON TB_DSD_QA.QA_ANSWER_ADM = TB_DSD_ADMIN.ADMIN_SEQ
+        WHERE QA_SEQ = #{value}
+    </select>
+    <select id="getQaByLimit" resultType="vn.gov.knn.admin.board.qa.QA">
+        SELECT *
+        FROM TB_DSD_QA
+        ORDER BY QA_QUESTION_DT
+            LIMIT #{value}
+    </select>
+    <select id="countTotalQA" resultType="java.lang.Integer">
+        SELECT COUNT(*)
+        FROM TB_DSD_QA
+    </select>
+    <select id="countNonReply" resultType="java.lang.Integer">
+        SELECT COUNT(*)
+        FROM TB_DSD_QA
+        WHERE QA_ANSWER IS NULL
+    </select>
+    <select id="getSessionIdByPost" resultType="java.lang.String">
+        SELECT QA_SESSION
+        FROM TB_DSD_QA
+        WHERE QA_SEQ = #{postSeq}
+    </select>
+</mapper>

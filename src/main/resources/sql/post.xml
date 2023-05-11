@@ -1,0 +1,306 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="vn.gov.knn.admin.board.post.PostMapper">
+    <resultMap id="PostResultMap" type="vn.gov.knn.admin.board.post.Post">
+        <id column="POST_SEQ" property="post_seq"/>
+        <result column="BOARD_SEQ" property="board_seq"/>
+        <result column="POST_TITLE_VN" property="post_title_vn"/>
+        <result column="POST_TITLE_EN" property="post_title_en"/>
+        <result column="POST_DESC_VN" property="post_desc_vn"/>
+        <result column="POST_DESC_EN" property="post_desc_en"/>
+        <result column="POST_TEXT_VN" property="post_text_vn"/>
+        <result column="POST_HYPER_TEXT_VN" property="post_hyper_text_vn"/>
+        <result column="POST_TEXT_EN" property="post_text_en"/>
+        <result column="POST_HYPER_TEXT_EN" property="post_hyper_text_en"/>
+        <result column="POST_VIDEO_URL" property="post_video_url"/>
+        <result column="POST_DISPLAY" property="post_display"/>
+        <result column="POST_VIEW_CNT" property="post_view_cnt"/>
+        <result column="POST_THUMBNAIL" property="post_thumbnail"/>
+        <result column="POST_DELETE" property="post_delete"/>
+        <result column="POST_REG_ADM" property="post_reg_adm"/>
+        <result column="POST_REG_DT" property="post_reg_dt"/>
+        <result column="POST_MOD_ADM" property="post_mod_adm"/>
+        <result column="POST_MOD_DT" property="post_mod_dt"/>
+
+        <result column="post_avatar_uuid" property="post_avatar_uuid"/>
+        <result column="board_type" property="board_type"/>
+        <result column="regis_name" property="regis_name"/>
+        <result column="board_name" property="board_name"/>
+    </resultMap>
+
+
+    <sql id="selectWhereCondition">
+        <if test="keyWord != null and keyWord != ''">
+            <choose>
+                <when test="searchItem != null and searchItem != ''">
+                    <choose>
+                        <when test="searchItem == 'post_title_vn'">
+                            AND UPPER(POST_TITLE_VN) LIKE UPPER(CONCAT("%",TRIM(#{keyWord}),"%"))
+                        </when>
+                        <when test="searchItem == 'post_title_en'">
+                            AND UPPER(POST_TITLE_EN) LIKE UPPER(CONCAT("%",TRIM(#{keyWord}),"%"))
+                        </when>
+                        <when test="searchItem == 'search_vn'">
+                            AND (
+                            UPPER(POST_TITLE_VN) LIKE UPPER(CONCAT("%",TRIM(#{keyWord}),"%"))
+                            OR UPPER(POST_TEXT_VN) LIKE UPPER(CONCAT("%",TRIM(#{keyWord}),"%"))
+                            )
+                        </when>
+                        <when test="searchItem == 'search_en'">
+                            AND (
+                            UPPER(POST_TITLE_EN) LIKE UPPER(CONCAT("%",TRIM(#{keyWord}),"%"))
+                            OR UPPER(POST_TEXT_EN) LIKE UPPER(CONCAT("%",TRIM(#{keyWord}),"%"))
+                            )
+                        </when>
+                    </choose>
+                </when>
+                <otherwise>
+                    AND (
+                    UPPER(POST_TITLE_VN) LIKE UPPER(CONCAT("%",TRIM(#{keyWord}),"%"))
+                    OR UPPER(POST_TITLE_EN) LIKE UPPER(CONCAT("%",TRIM(#{keyWord}),"%"))
+                    OR UPPER(POST_TEXT_VN) LIKE UPPER(CONCAT("%",TRIM(#{keyWord}),"%"))
+                    OR UPPER(POST_TEXT_EN) LIKE UPPER(CONCAT("%",TRIM(#{keyWord}),"%"))
+                    OR UPPER(POST_DESC_VN) LIKE UPPER(CONCAT("%",TRIM(#{keyWord}),"%"))
+                    OR UPPER(POST_DESC_EN) LIKE UPPER(CONCAT("%",TRIM(#{keyWord}),"%"))
+                    )
+                </otherwise>
+            </choose>
+        </if>
+    </sql>
+
+    <select id="getPostList" parameterType="vn.gov.knn.admin.board.post.Post" resultMap="PostResultMap">
+        SELECT * FROM (
+        SELECT
+        (@row_number := @row_number + 1) AS RN,
+        TB_DSD_POST.POST_SEQ, POST_TITLE_VN, POST_TITLE_EN,POST_DISPLAY,POST_DESC_VN,POST_DESC_EN,POST_VIDEO_URL,
+        POST_REG_DT,POST_REG_ADM,POST_THUMBNAIL,POST_DOC_DT,POST_VIEW_CNT,TB_DSD_FILE.FILE_UUID as
+        post_avatar_uuid, POST_TEXT_VN,POST_MOD_DT
+        FROM (TB_DSD_POST LEFT JOIN TB_DSD_FILE ON TB_DSD_POST.POST_THUMBNAIL = TB_DSD_FILE.FILE_SEQ)
+        <if test="board_seq != 0">
+            INNER JOIN TB_DSD_BOARD ON TB_DSD_BOARD.BOARD_SEQ = TB_DSD_POST.BOARD_SEQ
+        </if>
+
+        , (SELECT @row_number := 0) AS RN
+        WHERE POST_DELETE = 'N'
+        <if test="board_seq != 0">
+            AND TB_DSD_POST.BOARD_SEQ = #{board_seq} AND TB_DSD_BOARD.BOARD_DELETE = "N"
+        </if>
+        <include refid="selectWhereCondition">
+        </include>
+        ) a
+        ORDER BY
+        <choose>
+            <when test="order != null and order != '' and sort != null and sort != ''">
+                <choose>
+                    <when test="order == 'post_title_vn'">
+                        POST_TITLE_VN
+                    </when>
+                    <when test="order == 'post_title_en'">
+                        POST_TITLE_EN
+                    </when>
+                    <otherwise>
+                        POST_REG_DT
+                    </otherwise>
+                </choose>
+                <choose>
+                    <when test="sort == 'ASC'">
+                        ASC
+                    </when>
+                    <when test="sort == 'DESC'">
+                        DESC
+                    </when>
+                </choose>
+            </when>
+            <otherwise>
+                POST_REG_DT DESC
+            </otherwise>
+        </choose>
+        LIMIT #{size} OFFSET #{offset}
+    </select>
+
+    <select id="countPost" parameterType="vn.gov.knn.admin.board.post.Post" resultType="INTEGER">
+        SELECT COUNT(*) FROM TB_DSD_POST INNER JOIN TB_DSD_BOARD ON TB_DSD_POST.BOARD_SEQ = TB_DSD_BOARD.BOARD_SEQ
+        WHERE POST_DELETE = 'N'
+        <if test="board_seq != 0">
+            AND TB_DSD_POST.BOARD_SEQ = #{board_seq} AND TB_DSD_BOARD.BOARD_DELETE = 'N'
+        </if>
+        <include refid="selectWhereCondition">
+        </include>
+    </select>
+
+
+    <insert id="saveNewPost" parameterType="vn.gov.knn.admin.board.post.Post">
+        INSERT INTO TB_DSD_POST(BOARD_SEQ, POST_TITLE_VN, POST_TITLE_EN,
+        POST_DESC_VN,POST_DESC_EN,POST_TEXT_VN,POST_HYPER_TEXT_VN, POST_TEXT_EN,
+        POST_HYPER_TEXT_EN,POST_DELETE,
+        POST_VIDEO_URL,POST_DISPLAY,POST_THUMBNAIL,POST_REG_ADM,POST_REG_DT, POST_VIEW_CNT, POST_DOC_DT)
+        VALUES (#{board_seq}, #{post_title_vn}, #{post_title_en},#{post_desc_vn},#{post_desc_en}, #{post_text_vn},
+        #{post_hyper_text_vn},
+        #{post_text_en},
+        #{post_hyper_text_en},
+        #{post_delete},#{post_video_url},#{post_display},#{post_thumbnail},#{post_reg_adm},#{post_reg_dt},
+        #{post_view_cnt}, #{post_doc_dt})
+        <selectKey resultType="integer" keyProperty="post_seq" order="AFTER">
+            SELECT LAST_INSERT_ID()
+        </selectKey>
+    </insert>
+
+    <select id="getPostBySeq" parameterType="vn.gov.knn.admin.board.post.Post" resultMap="PostResultMap">
+        SELECT BOARD_SEQ,
+               TB_DSD_POST.POST_SEQ,
+               POST_TITLE_VN,
+               POST_TITLE_EN,
+               POST_DESC_VN,
+               POST_DESC_EN,
+               POST_HYPER_TEXT_VN,
+               POST_HYPER_TEXT_EN,
+               POST_VIDEO_URL,
+               POST_REG_ADM,
+               POST_THUMBNAIL,
+               POST_REG_DT,
+               POST_MOD_ADM,
+               POST_DISPLAY,
+               POST_MOD_DT,
+               POST_DOC_DT,
+               POST_VIEW_CNT,
+               TB_DSD_FILE.FILE_UUID    AS post_avatar_uuid,
+               TB_DSD_ADMIN.ADMIN_EMAIL AS regis_name
+        FROM TB_DSD_POST
+                 LEFT JOIN TB_DSD_FILE
+                           ON TB_DSD_POST.POST_THUMBNAIL = TB_DSD_FILE.FILE_SEQ
+                 LEFT JOIN TB_DSD_ADMIN
+                           ON TB_DSD_ADMIN.ADMIN_SEQ = TB_DSD_POST.POST_REG_ADM
+        WHERE TB_DSD_POST.POST_SEQ = #{post_seq}
+          AND TB_DSD_POST.POST_DELETE = "N"
+    </select>
+
+    <update id="updatePost" parameterType="vn.gov.knn.admin.board.post.Post">
+        UPDATE TB_DSD_POST
+        SET POST_TITLE_VN = #{post_title_vn}
+        , POST_TITLE_EN = #{post_title_en}
+        , POST_DESC_VN = #{post_desc_vn}
+        , POST_DESC_EN = #{post_desc_en}
+        , POST_TEXT_VN = #{post_text_vn}
+        , POST_HYPER_TEXT_VN = #{post_hyper_text_vn}
+        , POST_TEXT_EN = #{post_text_en}
+        , POST_HYPER_TEXT_EN = #{post_hyper_text_en}
+        , POST_THUMBNAIL = #{post_thumbnail}
+        , POST_DISPLAY = #{post_display}
+        , POST_MOD_ADM = #{post_mod_adm}
+        <if test="post_video_url != null">
+            ,POST_VIDEO_URL = #{post_video_url}
+        </if>
+        , POST_MOD_DT = #{post_mod_dt}
+        <if test="post_doc_dt != null">
+            ,POST_DOC_DT = #{post_doc_dt}
+        </if>
+        ,POST_REG_DT = #{post_reg_dt}
+        WHERE POST_SEQ = #{post_seq}
+    </update>
+
+    <update id="updateCountPost" parameterType="vn.gov.knn.admin.board.post.Post">
+        UPDATE TB_DSD_POST
+        SET POST_VIEW_CNT = POST_VIEW_CNT + 1
+        WHERE POST_SEQ = #{post_seq}
+    </update>
+    <update id="updateStatusDelete">
+        UPDATE TB_DSD_POST
+        SET POST_DELETE = 'Y'
+        WHERE POST_SEQ = #{post_seq}
+    </update>
+
+    <select id="getAllPost" parameterType="vn.gov.knn.admin.board.post.Post" resultMap="PostResultMap">
+        SELECT *
+        FROM TB_DSD_POST
+                 INNER JOIN TB_DSD_BOARD ON TB_DSD_POST.BOARD_SEQ = TB_DSD_BOARD.BOARD_SEQ
+        WHERE POST_DELETE = 'N'
+          AND TB_DSD_BOARD.BOARD_DELETE = 'N'
+        ORDER BY POST_REG_DT DESC
+    </select>
+
+    <select id="getPostByLimit" resultType="vn.gov.knn.admin.board.post.Post">
+        SELECT *,
+               TB_DSD_BOARD.BOARD_TYPE AS board_type,
+               TB_DSD_ADMIN.ADMIN_NAME AS regis_name,
+               TB_DSD_BOARD.BOARD_NAME AS board_name
+        FROM TB_DSD_POST
+                 LEFT JOIN TB_DSD_BOARD
+                           ON TB_DSD_POST.BOARD_SEQ = TB_DSD_BOARD.BOARD_SEQ
+                 LEFT JOIN TB_DSD_ADMIN ON TB_DSD_POST.POST_REG_ADM = TB_DSD_ADMIN.ADMIN_SEQ
+        WHERE TB_DSD_POST.POST_DELETE = 'N' AND TB_DSD_BOARD.BOARD_TYPE != 'D'
+        ORDER BY POST_REG_DT DESC LIMIT #{value}
+    </select>
+    <select id="getPrePost" resultType="vn.gov.knn.admin.board.post.Post">
+        SELECT POST_SEQ, POST_TITLE_VN, POST_TITLE_EN, POST_REG_DT
+        FROM TB_DSD_POST
+        WHERE POST_DELETE = "N"
+          AND POST_DISPLAY = "Y"
+          AND POST_SEQ <![CDATA[<]]> #{post_seq}
+          AND BOARD_SEQ = #{board_seq}
+        ORDER BY POST_SEQ DESC LIMIT 1
+    </select>
+    <select id="getNextPost" resultType="vn.gov.knn.admin.board.post.Post">
+        SELECT POST_SEQ, POST_TITLE_VN, POST_TITLE_EN, POST_REG_DT
+        FROM TB_DSD_POST
+        WHERE POST_DELETE = "N"
+          AND POST_DISPLAY = "Y"
+          AND POST_SEQ <![CDATA[>]]> #{post_seq}
+          AND BOARD_SEQ = #{board_seq}
+        ORDER BY POST_SEQ ASC LIMIT 1
+    </select>
+    <select id="getPostbyBoardSeqLimit" resultType="vn.gov.knn.admin.board.post.Post" resultMap="PostResultMap">
+        SELECT TB_DSD_POST.POST_TITLE_VN,
+               TB_DSD_POST.POST_TITLE_EN,
+               TB_DSD_POST.POST_VIDEO_URL,
+               TB_DSD_POST.POST_SEQ,
+               TB_DSD_FILE.FILE_UUID AS post_avatar_uuid
+        FROM TB_DSD_POST
+                 LEFT JOIN TB_DSD_FILE ON TB_DSD_POST.POST_THUMBNAIL = TB_DSD_FILE.FILE_SEQ
+        WHERE BOARD_SEQ = #{board_seq}
+          AND POST_DELETE = "N"
+          AND POST_DISPLAY = "Y"
+        ORDER BY POST_REG_DT LIMIT #{size}
+    </select>
+
+    <select id="getVideoByLimit" resultType="vn.gov.knn.admin.board.post.Post">
+        SELECT TB_DSD_POST.POST_SEQ, TB_DSD_FILE.FILE_UUID AS post_avatar_uuid
+        FROM TB_DSD_POST
+                 LEFT JOIN TB_DSD_FILE ON TB_DSD_POST.POST_THUMBNAIL = TB_DSD_FILE.FILE_SEQ
+        WHERE BOARD_SEQ IN (SELECT BOARD_SEQ FROM TB_DSD_BOARD WHERE BOARD_NAME = 'Video')
+        ORDER BY POST_REG_DT LIMIT #{value}
+    </select>
+    <select id="getEventByLimit" resultType="vn.gov.knn.admin.board.post.Post">
+        SELECT TB_DSD_POST.POST_SEQ, TB_DSD_FILE.FILE_UUID AS post_avatar_uuid
+        FROM TB_DSD_POST
+                 LEFT JOIN TB_DSD_FILE ON TB_DSD_POST.POST_THUMBNAIL = TB_DSD_FILE.FILE_SEQ
+        WHERE BOARD_SEQ IN (SELECT BOARD_SEQ FROM TB_DSD_BOARD WHERE BOARD_NAME = 'Sự kiện')
+        ORDER BY POST_REG_DT LIMIT #{value}
+    </select>
+    <select id="getDevByLimit" resultType="vn.gov.knn.admin.board.post.Post">
+        SELECT TB_DSD_POST.POST_SEQ, POST_TITLE_VN, POST_TITLE_EN, TB_DSD_FILE.FILE_UUID AS post_avatar_uuid
+        FROM TB_DSD_POST
+                 LEFT JOIN TB_DSD_FILE ON TB_DSD_POST.POST_THUMBNAIL = TB_DSD_FILE.FILE_SEQ
+        WHERE BOARD_SEQ IN (SELECT BOARD_SEQ FROM TB_DSD_BOARD WHERE BOARD_NAME = 'Phát triển kỹ năng nghề')
+        ORDER BY POST_REG_DT LIMIT #{value}
+    </select>
+    <select id="countPostByBoard" resultType="java.lang.Integer">
+        SELECT COUNT(*)
+        FROM TB_DSD_POST
+        WHERE BOARD_SEQ = #{value}
+          AND POST_DELETE = "N"
+          AND POST_DISPLAY = "Y"
+    </select>
+    <select id="countTotalPost" resultType="java.lang.Integer">
+        SELECT COUNT(*)
+        FROM TB_DSD_POST
+        WHERE BOARD_SEQ = #{value}
+          AND POST_DELETE = 'N'
+    </select>
+    <select id="countActivePost" resultType="java.lang.Integer">
+        SELECT COUNT(*)
+        FROM TB_DSD_POST
+        WHERE BOARD_SEQ = #{value}
+          AND POST_DISPLAY = 'Y'
+          AND POST_DELETE = 'N'
+    </select>
+</mapper>

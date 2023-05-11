@@ -1,0 +1,143 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="vn.gov.knn.admin.layout.LayoutMapper">
+    <resultMap id="LayoutResultMap" type="vn.gov.knn.admin.layout.Layout">
+        <id column="LAYOUT_SEQ" property="lo_seq"/>
+        <result column="LAYOUT_TYPE" property="lo_type"/>
+        <result column="LAYOUT_TITLE" property="lo_title"/>
+        <result column="LAYOUT_DESCR" property="lo_descr"/>
+        <result column="LAYOUT_LINK" property="lo_link"/>
+        <result column="LAYOUT_TARGET_BLANK" property="lo_target_blank"/>
+        <result column="LAYOUT_DISPLAY" property="lo_display"/>
+        <result column="LAYOUT_SORT" property="lo_sort"/>
+        <result column="LAYOUT_IMG" property="lo_img"/>
+        <result column="LAYOUT_REG_ADM" property="lo_reg_adm"/>
+        <result column="LAYOUT_REG_DT" property="lo_reg_dt"/>
+        <result column="LAYOUT_MOD_ADM" property="lo_mod_adm"/>
+        <result column="LAYOUT_MOD_DT" property="lo_mod_dt"/>
+
+        <result column="lo_img_file_uuid" property="lo_img_file_uuid"/>
+    </resultMap>
+
+    <select id="countLayout" parameterType="vn.gov.knn.admin.layout.Layout" resultType="INTEGER">
+        SELECT COUNT(*)
+        FROM TB_DSD_LAYOUT
+    </select>
+
+    <select id="getAllLayout" resultMap="LayoutResultMap">
+        SELECT LAYOUT_SEQ,
+        LAYOUT_TYPE,
+        LAYOUT_TITLE,
+        LAYOUT_LINK,
+        TB_DSD_FILE.file_uuid as lo_img_file_uuid
+        FROM TB_DSD_LAYOUT
+        LEFT JOIN TB_DSD_FILE ON TB_DSD_LAYOUT.LAYOUT_IMG = TB_DSD_FILE.file_seq
+        ORDER BY
+        <choose>
+            <when test="order != null and order != '' and sort != null and sort != ''">
+                <choose>
+                    <when test="order == 'lo_title'">LAYOUT_TITLE</when>
+                    <when test="order == 'lo_link'">LAYOUT_LINK</when>
+                    <when test="order == 'lo_type'">LAYOUT_TYPE</when>
+                    <otherwise>LAYOUT_REG_DT</otherwise>
+                </choose>
+                <choose>
+                    <when test="sort == 'ASC'">ASC</when>
+                    <when test="sort == 'DESC'">DESC</when>
+                </choose>
+            </when>
+            <otherwise>LAYOUT_REG_DT DESC</otherwise>
+        </choose>
+    </select>
+    <!--    <select id="getLayoutByLimit" resultMap="LayoutResultMap">-->
+    <!--        SELECT LAYOUT_SEQ,-->
+    <!--               LAYOUT_TYPE,-->
+    <!--               LAYOUT_TITLE,-->
+    <!--               LAYOUT_DESCR,-->
+    <!--               LAYOUT_LINK,-->
+    <!--               LAYOUT_TARGET_BLANK,-->
+    <!--               LO_DISPLAY,-->
+    <!--               LO_SORT,-->
+    <!--               LO_IMG,-->
+    <!--               LO_REG_ADM,-->
+    <!--               LO_REG_DT,-->
+    <!--               LO_MOD_ADM,-->
+    <!--               LO_MOD_DT,-->
+    <!--               TB_DSD_FILE.file_uuid as lo_img_file_uuid-->
+    <!--        FROM TB_DSD_LAYOUT-->
+    <!--                 LEFT JOIN TB_DSD_FILE ON TB_DSD_LAYOUT.LO_IMG = TB_DSD_FILE.file_seq-->
+    <!--        WHERE TB_DSD_LAYOUT.LAYOUT_DISPLAY = 'Y'-->
+    <!--          AND TB_DSD_LAYOUT.LAYOUT_TYPE = "Banner" LIMIT #{value }-->
+    <!--    </select>-->
+
+    <select id="getLayoutBySeq" parameterType="vn.gov.knn.admin.layout.Layout" resultMap="LayoutResultMap">
+        SELECT LAYOUT_SEQ,
+               LAYOUT_TYPE,
+               LAYOUT_TITLE,
+               LAYOUT_DESCR,
+               LAYOUT_LINK,
+               LAYOUT_TARGET_BLANK,
+               LAYOUT_DISPLAY,
+               LAYOUT_SORT,
+               LAYOUT_IMG,
+               LAYOUT_REG_ADM,
+               LAYOUT_REG_DT,
+               LAYOUT_MOD_ADM,
+               LAYOUT_MOD_DT,
+               TB_DSD_FILE.file_uuid as lo_img_file_uuid
+        FROM TB_DSD_LAYOUT
+                 LEFT JOIN TB_DSD_FILE ON TB_DSD_LAYOUT.LAYOUT_IMG = TB_DSD_FILE.file_seq
+        WHERE LAYOUT_SEQ = #{value}
+    </select>
+    <select id="getAllMVS" resultType="vn.gov.knn.admin.layout.Layout" resultMap="LayoutResultMap">
+        SELECT *, TB_DSD_FILE.FILE_UUID AS lo_img_file_uuid
+        FROM TB_DSD_LAYOUT
+                 LEFT JOIN TB_DSD_FILE ON TB_DSD_LAYOUT.LAYOUT_IMG = TB_DSD_FILE.FILE_SEQ
+        WHERE LAYOUT_TYPE = "MainVisual"
+          AND LAYOUT_DISPLAY = "Y"
+    </select>
+    <select id="getLayoutByTypeLimit" resultType="vn.gov.knn.admin.layout.Layout" resultMap="LayoutResultMap">
+        SELECT LAYOUT_SEQ, LAYOUT_LINK, LAYOUT_DESCR, TB_DSD_FILE.FILE_UUID AS lo_img_file_uuid
+        FROM TB_DSD_LAYOUT
+                 LEFT JOIN TB_DSD_FILE ON TB_DSD_LAYOUT.LAYOUT_IMG = TB_DSD_FILE.FILE_SEQ
+        WHERE LAYOUT_TYPE = #{lo_type}
+          AND LAYOUT_DISPLAY = "Y"
+        ORDER BY LAYOUT_REG_DT LIMIT #{size}
+    </select>
+    <select id="getLayoutCollab" resultType="vn.gov.knn.admin.layout.Layout" resultMap="LayoutResultMap">
+        SELECT *, TB_DSD_FILE.FILE_UUID AS lo_img_file_uuid
+        FROM TB_DSD_LAYOUT
+                 LEFT JOIN TB_DSD_FILE ON TB_DSD_LAYOUT.LAYOUT_IMG = TB_DSD_FILE.FILE_SEQ
+        WHERE LAYOUT_TYPE = "CQHT"
+          AND LAYOUT_DISPLAY = "Y"
+    </select>
+
+    <insert id="saveNewLayout" parameterType="vn.gov.knn.admin.layout.Layout">
+        INSERT INTO TB_DSD_LAYOUT(LAYOUT_TITLE, LAYOUT_DESCR, LAYOUT_IMG, LAYOUT_LINK, LAYOUT_TYPE, LAYOUT_SORT,
+                                  LAYOUT_TARGET_BLANK,
+                                  LAYOUT_DISPLAY, LAYOUT_REG_ADM, LAYOUT_REG_DT)
+        VALUES (#{lo_title}, #{lo_descr}, #{lo_img}, #{lo_link}, #{lo_type}, #{lo_sort},
+                #{lo_target_blank}, #{lo_display}, #{lo_reg_adm}, #{lo_reg_dt})
+    </insert>
+
+    <update id="updateLayout" parameterType="vn.gov.knn.admin.layout.Layout">
+        UPDATE TB_DSD_LAYOUT
+        SET LAYOUT_TITLE        = #{lo_title},
+            LAYOUT_DESCR        = #{lo_descr},
+            LAYOUT_IMG          = #{lo_img},
+            LAYOUT_LINK         = #{lo_link},
+            LAYOUT_TYPE         = #{lo_type},
+            LAYOUT_SORT         = #{lo_sort},
+            LAYOUT_TARGET_BLANK = #{lo_target_blank},
+            LAYOUT_DISPLAY      = #{lo_display},
+            LAYOUT_MOD_ADM      = #{lo_mod_adm},
+            LAYOUT_MOD_DT       = #{lo_mod_dt}
+        WHERE LAYOUT_SEQ = #{lo_seq}
+    </update>
+
+    <delete id="deleteLayout" parameterType="vn.gov.knn.admin.layout.Layout">
+        DELETE
+        FROM TB_DSD_LAYOUT
+        WHERE LAYOUT_SEQ = #{value}
+    </delete>
+</mapper>

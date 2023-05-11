@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="vn.gov.knn.admin.certificate.cert2.Cert2Mapper">
+    <resultMap id="Cert2ResultMap" type="vn.gov.knn.admin.certificate.cert2.Cert2">
+        <id column="CERT2_SEQ" property="cert2_seq"/>
+        <result column="CERT1_SEQ" property="cert1_seq"/>
+        <result column="CERT2_NAME" property="cert2_name"/>
+        <result column="CERT2_SORT" property="cert2_sort"/>
+        <result column="CERT2_DISPLAY" property="cert2_display"/>
+        <result column="CERT2_REG_DT" property="cert2_reg_dt"/>
+        <result column="CERT2_MOD_DT" property="cert2_mod_dt"/>
+        <result column="CERT2_DELETE" property="cert2_delete"/>
+
+        <result column="cert2_name" property="cert2_name"/>
+    </resultMap>
+
+    <insert id="addCert2P">
+        INSERT INTO TB_DSD_CERT2(CERT2_SEQ, CERT1_SEQ, CERT2_NAME, CERT2_SORT, CERT2_DISPLAY, CERT2_REG_DT)
+            VALUE (#{cert2_seq},#{cert1_seq},#{cert2_name},#{cert2_sort},#{cert2_display},#{cert2_reg_dt})
+    </insert>
+
+    <select id="getListCert2ByCert1" resultType="vn.gov.knn.admin.certificate.cert2.Cert2">
+        SELECT *
+        FROM TB_DSD_CERT2
+        WHERE CERT1_SEQ = #{cert1_seq} AND CERT2_DELETE != 'Y'
+        <if test="keyWord != null">
+            AND UPPER(CERT2_NAME) LIKE
+            UPPER(CONCAT("%",TRIM(#{keyWord}), "%"))
+        </if>
+        ORDER BY CERT2_SORT ASC
+    </select>
+
+    <select id="countByCert1" resultType="java.lang.Integer">
+        SELECT COUNT(*)
+        FROM TB_DSD_CERT2
+        WHERE CERT1_SEQ = #{value}
+    </select>
+
+    <select id="getCert2BySeq" resultType="vn.gov.knn.admin.certificate.cert2.Cert2">
+        SELECT *
+        FROM TB_DSD_CERT2
+        WHERE CERT2_SEQ = #{value}
+          AND CERT2_DELETE != 'Y'
+    </select>
+
+    <sql id="selectWhereCondition">
+        <if test="keyWord != null and keyWord != ''">
+            AND
+            UPPER(CERT2_NAME) LIKE UPPER(CONCAT("%",TRIM(#{keyWord}),"%"))
+            OR CERT2_SEQ IN (SELECT CERT2_SEQ FROM TB_DSD_CERT3 WHERE UPPER(CERT3_NAME) LIKE
+            UPPER(CONCAT("%",TRIM(#{keyWord}),"%")))
+        </if>
+    </sql>
+
+    <select id="getListCert2" resultMap="Cert2ResultMap">
+        SELECT * FROM (
+        SELECT
+        (@row_number := @row_number + 1) AS RN,
+        CERT2_SEQ,CERT1_SEQ, CERT2_NAME,CERT2_SORT,CERT2_DISPLAY,CERT2_REG_DT,CERT2_MOD_DT
+        FROM TB_DSD_CERT2 , (SELECT @row_number := 0) AS RN
+        WHERE CERT2_DELETE != 'Y'
+        <include refid="selectWhereCondition">
+        </include>
+        ORDER BY CERT2_SORT ASC
+        ) a
+        LIMIT 3 OFFSET #{offset}
+    </select>
+
+    <select id="countCert2" resultType="int">
+        SELECT COUNT(*)
+        FROM TB_DSD_CERT2
+        WHERE CERT2_DELETE != 'Y'
+        <include refid="selectWhereCondition">
+        </include>
+    </select>
+    <select id="countTotalCert2" resultType="java.lang.Integer">
+        SELECT COUNT(*)
+        FROM TB_DSD_CERT2
+    </select>
+    <select id="countActiveCert2" resultType="java.lang.Integer">
+        SELECT COUNT(*)
+        FROM TB_DSD_CERT2
+        WHERE CERT2_DISPLAY = 'Y'
+    </select>
+    <select id="getAll" resultType="vn.gov.knn.admin.certificate.cert2.Cert2">
+        SELECT *
+        FROM TB_DSD_CERT2
+        WHERE CERT2_DELETE = 'N'
+          AND CERT2_DISPLAY = 'Y'
+    </select>
+    <select id="getAllCert2ByCert1" resultType="vn.gov.knn.admin.certificate.cert2.Cert2">
+        SELECT *
+        FROM TB_DSD_CERT2
+        WHERE CERT2_DELETE = 'N'
+          AND CERT2_DISPLAY = 'Y'
+          AND CERT1_SEQ = #{value}
+    </select>
+
+    <update id="updateDelByCert1">
+        UPDATE TB_DSD_CERT2
+        SET CERT2_DELETE = 'Y'
+        WHERE CERT1_SEQ = #{value}
+    </update>
+
+    <update id="updateDelBySeq">
+        UPDATE TB_DSD_CERT2
+        SET CERT2_DELETE = 'Y'
+        WHERE CERT2_SEQ = #{value}
+    </update>
+
+    <update id="UpdateCert2">
+        UPDATE TB_DSD_CERT2
+        SET CERT1_SEQ     = #{cert1_seq},
+            CERT2_NAME    = #{cert2_name},
+            CERT2_SORT    = #{cert2_sort},
+            CERT2_DISPLAY = #{cert2_display},
+            CERT2_MOD_DT  = #{cert2_mod_dt}
+        WHERE CERT2_SEQ = #{cert2_seq}
+    </update>
+</mapper>

@@ -1,0 +1,144 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="vn.gov.knn.admin.certificate.cert3.Cert3Mapper">
+    <resultMap id="Cert3ResultMap" type="vn.gov.knn.admin.certificate.cert3.Cert3">
+        <id column="CERT3_SEQ" property="cert3_seq"/>
+        <result column="CERT1_SEQ" property="cert1_seq"/>
+        <result column="CERT2_SEQ" property="cert2_seq"/>
+        <result column="CERT3_NAME" property="cert3_name"/>
+        <result column="CERT3_DESC" property="cert3_desc"/>
+        <result column="CERT3_SORT" property="cert3_sort"/>
+        <result column="CERT3_LEVEL" property="cert3_level"/>
+        <result column="CERT3_DISPLAY" property="cert3_display"/>
+        <result column="CERT3_REG_DT" property="cert3_reg_dt"/>
+        <result column="CERT3_MOD_DT" property="cert3_mod_dt"/>
+        <result column="CERT3_DELETE" property="cert3_delete"/>
+
+        <result column="cert2_name" property="cert2_name"/>
+        <result column="cert1_name" property="cert1_name"/>
+    </resultMap>
+    <insert id="addCert3P">
+        INSERT INTO TB_DSD_CERT3(CERT3_SEQ, CERT1_SEQ, CERT2_SEQ, CERT3_NAME, CERT3_DESC, CERT3_SORT, CERT3_LEVEL,
+                                 CERT3_DISPLAY, CERT3_REG_DT) VALUE (#{cert3_seq},#{cert1_seq},#{cert2_seq},#{cert3_name},#{cert3_desc},#{cert3_sort},#{cert3_level},#{cert3_display},#{cert3_reg_dt})
+    </insert>
+    <select id="countByCert2" resultType="java.lang.Integer">
+        SELECT COUNT(*)
+        FROM TB_DSD_CERT3
+        WHERE CERT2_SEQ = #{value}
+    </select>
+
+    <select id="getListByCert2Seq" resultMap="Cert3ResultMap">
+        SELECT *,TB_DSD_CERT2.CERT2_NAME AS cert2_name
+        FROM TB_DSD_CERT3 INNER JOIN TB_DSD_CERT2 ON TB_DSD_CERT3.CERT2_SEQ = TB_DSD_CERT2.CERT2_SEQ
+        WHERE TB_DSD_CERT3.CERT2_SEQ = #{cert2_seq}
+        AND CERT2_DELETE != 'Y' AND CERT3_DELETE != 'Y'
+        <if test="keyWord != null">
+            AND UPPER(CERT3_NAME) LIKE
+            UPPER(CONCAT("%",TRIM(#{keyWord}), "%"))
+        </if>
+        ORDER BY CERT3_SORT ASC
+    </select>
+
+    <update id="updateDelByCert1">
+        UPDATE TB_DSD_CERT3
+        SET CERT3_DELETE = 'Y'
+        WHERE CERT1_SEQ = #{value}
+    </update>
+
+    <update id="updateDelByCert2">
+        UPDATE TB_DSD_CERT3
+        SET CERT3_DELETE = 'Y'
+        WHERE CERT2_SEQ = #{value}
+    </update>
+
+    <update id="updateDelBySeq">
+        UPDATE TB_DSD_CERT3
+        SET CERT3_DELETE = 'Y'
+        WHERE CERT3_SEQ = #{value}
+    </update>
+
+    <select id="getListByCert1Seq" resultMap="Cert3ResultMap">
+        SELECT *
+        FROM TB_DSD_CERT3
+        WHERE TB_DSD_CERT3.CERT1_SEQ = #{value} AND CERT3_DELETE != 'Y'
+        <if test="keyWord != null">
+            AND UPPER(CERT3_NAME) LIKE
+            UPPER(CONCAT("%",TRIM(#{keyWord}), "%"))
+        </if>
+        ORDER BY CERT3_SORT ASC
+    </select>
+
+    <select id="getCert3BySeq" resultMap="Cert3ResultMap">
+        SELECT *, TB_DSD_CERT2.CERT2_NAME AS cert2_name, TB_DSD_CERT1.CERT1_NAME AS cert1_name
+        FROM TB_DSD_CERT3
+                 LEFT JOIN TB_DSD_CERT2 ON TB_DSD_CERT3.CERT2_SEQ = TB_DSD_CERT2.CERT2_SEQ
+                 LEFT JOIN TB_DSD_CERT1 ON TB_DSD_CERT3.CERT1_SEQ = TB_DSD_CERT1.CERT1_SEQ
+        WHERE CERT3_SEQ = #{value}
+    </select>
+    <select id="countTotalCert3" resultType="java.lang.Integer">
+        SELECT COUNT(*)
+        FROM TB_DSD_CERT3
+        WHERE CERT3_DELETE != 'Y'
+    </select>
+    <select id="countActiveCert3" resultType="java.lang.Integer">
+        SELECT COUNT(*)
+        FROM TB_DSD_CERT3
+        WHERE CERT3_DISPLAY = 'Y'
+          AND CERT3_DELETE != 'Y'
+    </select>
+    <sql id="selectWhereCondition">
+        <if test="cert1_seq != null and cert1_seq != ''">
+            AND TB_DSD_CERT3.CERT1_SEQ = #{cert1_seq}
+        </if>
+        <if test="cert2_seq != null and cert2_seq != ''">
+            AND TB_DSD_CERT3.CERT2_SEQ = #{cert2_seq}
+        </if>
+        <if test="keyWord != null and keyWord != ''">
+            AND UPPER(TB_DSD_CERT3.CERT3_NAME) LIKE UPPER(CONCAT("%",TRIM(#{keyWord}),"%"))
+        </if>
+    </sql>
+    <select id="getListCert3" resultType="vn.gov.knn.admin.certificate.cert3.Cert3">
+        SELECT * FROM (
+        SELECT
+        (@row_number := @row_number + 1) AS RN,
+        CERT3_SEQ,
+        CERT3_NAME,
+        TB_DSD_CERT3.CERT2_SEQ,
+        TB_DSD_CERT1.CERT1_NAME AS cert1_name,
+        TB_DSD_CERT2.CERT2_NAME AS cert2_name
+        FROM TB_DSD_CERT3
+        LEFT JOIN TB_DSD_CERT2 ON TB_DSD_CERT3.CERT2_SEQ = TB_DSD_CERT2.CERT2_SEQ
+        LEFT JOIN TB_DSD_CERT1 ON TB_DSD_CERT3.CERT1_SEQ = TB_DSD_CERT1.CERT1_SEQ, (SELECT @row_number := 0) AS RN
+        WHERE CERT3_DELETE = 'N' AND CERT3_DISPLAY = 'Y'
+        <include refid="selectWhereCondition"></include>
+        ORDER BY TB_DSD_CERT3.CERT2_SEQ , TB_DSD_CERT3.CERT3_SORT ASC
+        ) a
+        WHERE (
+        RN BETWEEN #{startRow} AND #{endRow}
+        )
+    </select>
+    <select id="countCert3" resultType="java.lang.Integer">
+        SELECT COUNT(*) FROM TB_DSD_CERT3
+        WHERE CERT3_DELETE = 'N' AND CERT3_DISPLAY = 'Y'
+        <include refid="selectWhereCondition"></include>
+    </select>
+    <select id="getAll" resultType="vn.gov.knn.admin.certificate.cert3.Cert3">
+        SELECT *
+        FROM TB_DSD_CERT3
+        WHERE CERT3_DELETE != 'Y'
+        AND CERT3_DISPLAY = 'Y'
+    </select>
+
+    <update id="UpdateCert3">
+        UPDATE TB_DSD_CERT3
+        SET CERT1_SEQ     = #{cert1_seq},
+            CERT2_SEQ     = #{cert2_seq},
+            CERT3_NAME    = #{cert3_name},
+            CERT3_LEVEL   = #{cert3_level},
+            CERT3_SORT    = #{cert3_sort},
+            CERT3_DISPLAY = #{cert3_display},
+            CERT3_DESC    = #{cert3_desc},
+            CERT3_MOD_DT  = #{cert3_mod_dt}
+        WHERE CERT3_SEQ = #{cert3_seq}
+    </update>
+</mapper>

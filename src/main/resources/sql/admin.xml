@@ -1,0 +1,175 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="vn.gov.knn.admin.admin.AdminMapper">
+    <resultMap id="AdminResultMap" type="Admin">
+        <id column="ADMIN_SEQ" property="ad_seq"/>
+        <result column="ADMIN_EMAIL" property="ad_email"/>
+        <result column="ADMIN_PW" property="ad_pw"/>
+        <result column="ADMIN_NAME" property="ad_name"/>
+        <result column="ADMIN_PHONE" property="ad_phone"/>
+        <result column="ADMIN_STATUS" property="ad_status"/>
+        <result column="ADMIN_ROLE" property="ad_role"/>
+        <result column="ADMIN_MEMO" property="ad_memo"/>
+        <result column="ADMIN_REG_DT" property="ad_reg_dt"/>
+        <result column="ADMIN_MOD_DT" property="ad_mod_dt"/>
+        <result column="ADMIN_LAST_LOGIN" property="ad_last_login"/>
+        <result column="ADMIN_LOGIN_FAIL" property="ad_login_fail"/>
+        <result column="ADMIN_AGENCY_SEQ" property="ad_agency_seq"/>
+        <result column="ADMIN_PROFILE_PICTURE" property="ad_profile_picture"/>
+
+        <result column="ad_avatar_uuid" property="ad_avatar_uuid"/>
+    </resultMap>
+
+    <select id="countAdmin" parameterType="Admin" resultType="Integer">
+        SELECT COUNT(*)
+        FROM TB_DSD_ADMIN
+    </select>
+
+    <update id="updateLastLogin" parameterType="Admin">
+        UPDATE TB_DSD_ADMIN
+        SET ADMIN_LAST_LOGIN = #{ad_last_login}
+        WHERE ADMIN_EMAIL = #{ad_email}
+    </update>
+
+    <insert id="saveNewAdmin" parameterType="Admin">
+        INSERT INTO TB_DSD_ADMIN (ADMIN_NAME, ADMIN_PW, ADMIN_ROLE, ADMIN_EMAIL, ADMIN_AGENCY_SEQ, ADMIN_PHONE,
+                                  ADMIN_MEMO, ADMIN_STATUS, ADMIN_REG_DT, ADMIN_PROFILE_PICTURE,ADMIN_LOGIN_FAIL)
+        VALUES (#{ad_name}, #{ad_pw}, #{ad_role}, #{ad_email}, #{ad_agency_seq}, #{ad_phone},
+                #{ad_memo}, #{ad_status}, #{ad_reg_dt}, #{ad_profile_picture},0);
+    </insert>
+
+    <update id="updatePassByEmail" parameterType="Admin">
+        UPDATE TB_DSD_ADMIN
+        SET ADMIN_PW = #{ad_pw}
+        WHERE ADMIN_EMAIL = #{ad_email}
+    </update>
+
+    <select id="getAdminByEmail" parameterType="Admin" resultMap="AdminResultMap">
+        select *
+        from TB_DSD_ADMIN
+        where ADMIN_EMAIL = #{value}
+    </select>
+
+    <update id="updateAdmin" parameterType="Admin">
+        UPDATE TB_DSD_ADMIN
+        SET ADMIN_NAME=#{ad_name},
+        ADMIN_EMAIL=#{ad_email},
+        ADMIN_AGENCY_SEQ=#{ad_agency_seq},
+        ADMIN_LOGIN_FAIL = 0,
+        ADMIN_PHONE=#{ad_phone},
+        <if test="ad_pw != '' and ad_pw != null">
+            ADMIN_PW = #{ad_pw},
+        </if>
+        ADMIN_MOD_DT=#{ad_mod_dt},
+        ADMIN_ROLE=#{ad_role},
+        ADMIN_STATUS=#{ad_status},
+        ADMIN_MEMO=#{ad_memo}
+        WHERE ADMIN_SEQ = #{ad_seq}
+    </update>
+
+    <update id="updateInfo" parameterType="Admin">
+        UPDATE TB_DSD_ADMIN
+        SET ADMIN_NAME=#{ad_name},
+            ADMIN_EMAIL=#{ad_email},
+            ADMIN_PHONE=#{ad_phone},
+            ADMIN_MEMO=#{ad_memo}
+        WHERE ADMIN_SEQ = #{ad_seq}
+    </update>
+    <update id="updatePassword">
+        UPDATE TB_DSD_ADMIN
+        SET ADMIN_PW = #{ad_pw}
+        WHERE ADMIN_SEQ = #{ad_seq}
+    </update>
+    <update id="updateLoginFalse">
+        UPDATE TB_DSD_ADMIN
+        SET ADMIN_LOGIN_FAIL = ADMIN_LOGIN_FAIL + 1
+        WHERE ADMIN_EMAIL = #{value}
+    </update>
+    <update id="updateStatus">
+        UPDATE TB_DSD_ADMIN
+        SET ADMIN_STATUS = #{ad_status}
+        WHERE ADMIN_EMAIL = #{ad_email}
+    </update>
+    <update id="updateNumberLoginFalse">
+        UPDATE TB_DSD_ADMIN
+        SET ADMIN_LOGIN_FAIL = 0
+        WHERE ADMIN_EMAIL = #{value}
+    </update>
+    <select id="getAdminBySeq" resultMap="AdminResultMap">
+        select *, TB_DSD_FILE.file_uuid AS us_avatar_uuid
+        from TB_DSD_ADMIN
+                 left join TB_DSD_FILE on TB_DSD_ADMIN.ADMIN_PROFILE_PICTURE = TB_DSD_FILE.file_seq
+        where ADMIN_SEQ = #{value }
+    </select>
+    <select id="getAllAdmin" resultType="vn.gov.knn.admin.admin.Admin" resultMap="AdminResultMap">
+        SELECT *
+        FROM TB_DSD_ADMIN
+    </select>
+    <select id="countTotalAdmin" resultType="java.lang.Integer">
+        SELECT COUNT(*)
+        FROM TB_DSD_ADMIN
+    </select>
+    <select id="countActiveMember" resultType="java.lang.Integer">
+        SELECT COUNT(*)
+        FROM TB_DSD_ADMIN
+        WHERE ADMIN_STATUS = "Y"
+    </select>
+    <delete id="deleteAdmin">
+        DELETE
+        FROM TB_DSD_ADMIN
+        WHERE ADMIN_SEQ = #{value}
+    </delete>
+
+    <sql id="selectWhereCondition">
+        <if test="keyWord != null and keyWord != ''">
+            WHERE
+            <choose>
+                <when test="searchItem != null and searchItem != ''">
+                    <choose>
+                        <when test="searchItem == 'ad_email'">
+                            ADMIN_EMAIL LIKE CONCAT("%",TRIM(#{keyWord}),"%")
+                        </when>
+                        <when test="searchItem == 'ad_name'">
+                            ADMIN_NAME LIKE CONCAT("%",TRIM(#{keyWord}),"%")
+                        </when>
+                    </choose>
+                </when>
+                <otherwise>
+                    ADMIN_EMAIL LIKE CONCAT("%",TRIM(#{keyWord}),"%")
+                    OR ADMIN_NAME LIKE CONCAT("%",TRIM(#{keyWord}),"%")
+                </otherwise>
+            </choose>
+        </if>
+    </sql>
+
+    <select id="getAdminList" resultType="vn.gov.knn.admin.admin.Admin" resultMap="AdminResultMap">
+        SELECT * FROM (
+        SELECT ADMIN_NAME, ADMIN_PW, ADMIN_ROLE, ADMIN_EMAIL, ADMIN_AGENCY_SEQ, ADMIN_PHONE,
+        ADMIN_MEMO, ADMIN_STATUS, ADMIN_REG_DT , ADMIN_SEQ,
+        (@row_number := @row_number + 1) AS RN
+        FROM TB_DSD_ADMIN , (SELECT @row_number := 0) AS RN
+        <include refid="selectWhereCondition">
+        </include>
+        ORDER BY
+        ADMIN_REG_DT DESC
+        ) a
+        WHERE (
+        RN BETWEEN #{startRow} AND #{endRow}
+        )
+    </select>
+
+    <select id="countAdminPagin" resultType="int">
+        SELECT COUNT(*)
+        FROM TB_DSD_ADMIN
+        <include refid="selectWhereCondition">
+        </include>
+    </select>
+    <select id="countAdminByStatus" resultType="java.lang.Integer">
+        SELECT COUNT (*)
+        FROM TB_DSD_ADMIN
+        WHERE ADMIN_STATUS = #{ad_status}
+        <if test="ad_role != null and ad_role != 0">
+            AND ADMIN_ROLE = #{ad_role}
+        </if>
+    </select>
+</mapper>
